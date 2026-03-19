@@ -1,11 +1,10 @@
 package com.stardevllc.staritemgenerators.common.model;
 
 import com.stardevllc.starlib.clock.ClockManager;
+import com.stardevllc.starlib.collections.observable.list.ObservableArrayList;
+import com.stardevllc.starlib.collections.observable.list.ObservableList;
 import com.stardevllc.starlib.injector.Inject;
-import com.stardevllc.starlib.observable.collections.list.ObservableArrayList;
-import com.stardevllc.starlib.observable.collections.list.ObservableList;
-import com.stardevllc.starlib.observable.property.readonly.ReadOnlyBooleanProperty;
-import com.stardevllc.starlib.observable.property.readwrite.ReadWriteBooleanProperty;
+import com.stardevllc.starlib.values.property.BooleanProperty;
 import com.stardevllc.starmclib.Cuboid;
 import com.stardevllc.starmclib.Position;
 import org.bukkit.Location;
@@ -37,7 +36,7 @@ public class ItemGenerator {
     
     protected World world;
     
-    protected final ReadWriteBooleanProperty initProperty, runningProperty;
+    protected final BooleanProperty initProperty, runningProperty;
     
     protected final Set<SpawnedItem> spawnedItems = new HashSet<>();
     
@@ -46,9 +45,10 @@ public class ItemGenerator {
     public ItemGenerator(String id, List<ItemEntry> itemEntries, Position boundsMin, Position boundsMax) {
         this.id = id;
         this.itemEntries = new ObservableArrayList<>(itemEntries);
-        this.initProperty = new ReadWriteBooleanProperty(this, "init", false);
-        this.initProperty.addListener(c -> {
-            if (c.newValue()) {
+        this.initProperty = new BooleanProperty(this, "init", false);
+        this.initProperty.addChangeListener((v, o, n) -> {
+            System.out.println("init property in generator " + this.id + " changed from " + o + " to " + n);
+            if (n) {
                 for (ItemEntry itemEntry : this.itemEntries) {
                     itemEntry.init(this, world);
                 }
@@ -58,9 +58,10 @@ public class ItemGenerator {
                 }
             }
         });
-        this.runningProperty = new ReadWriteBooleanProperty(this, "running", false);
-        this.runningProperty.addListener(c -> {
-            if (c.newValue()) {
+        this.runningProperty = new BooleanProperty(this, "running", false);
+        this.runningProperty.addChangeListener((v, o, n) -> {
+            System.out.println("running property in generator " + this.id + " changed from " + o + " to " + n);
+            if (n) {
                 for (ItemEntry itemEntry : this.itemEntries) {
                     itemEntry.unpause();
                 }
@@ -180,12 +181,12 @@ public class ItemGenerator {
         return clockManager;
     }
     
-    public ReadOnlyBooleanProperty initProperty() {
-        return initProperty.asReadOnly();
+    public boolean isInitialized() {
+        return this.initProperty.get();
     }
     
-    public ReadOnlyBooleanProperty runningProperty() {
-        return runningProperty.asReadOnly();
+    public boolean isRunning() {
+        return this.runningProperty.get();
     }
     
     public World getWorld() {

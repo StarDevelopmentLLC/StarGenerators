@@ -3,17 +3,19 @@ package com.stardevllc.staritemgenerators.common.model;
 import com.stardevllc.starlib.clock.ClockManager;
 import com.stardevllc.starlib.injector.FieldInjector;
 import com.stardevllc.starlib.injector.SimpleFieldInjector;
-import com.stardevllc.starlib.objects.registry.Registry;
-import com.stardevllc.starlib.objects.registry.RegistryObject;
+import com.stardevllc.starlib.registry.*;
 
-public class GeneratorRegistry extends Registry<String, ItemGenerator> {
+import java.util.HashMap;
+import java.util.Set;
+
+public class GeneratorRegistry extends AbstractRegistry<ItemGenerator> {
     
     private final ClockManager clockManager;
     
     private final FieldInjector injector;
     
     public GeneratorRegistry(ClockManager clockManager) {
-        super(ItemGenerator::getId);
+        super(ItemGenerator.class, RegistryKey.of("itemgenerators"), "Item Generators", new HashMap<>(), null, false, null, Set.of());
         this.clockManager = clockManager;
         
         this.injector = new SimpleFieldInjector();
@@ -22,15 +24,8 @@ public class GeneratorRegistry extends Registry<String, ItemGenerator> {
     }
     
     @Override
-    public RegistryObject<String, ItemGenerator> register(RegistryObject<String, ItemGenerator> registryObject) {
-        injector.inject(registryObject.get());
-        return super.register(registryObject);
-    }
-    
-    @Override
-    public RegistryObject<String, ItemGenerator> register(String key, ItemGenerator value) {
+    protected void callAdditionalRegisterActions(RegistryKey key, ItemGenerator value, ItemGenerator oldValue) {
         injector.inject(value);
-        return super.register(key, value);
     }
     
     public ClockManager getClockManager() {

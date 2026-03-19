@@ -2,7 +2,6 @@ package com.stardevllc.staritemgenerators.common;
 
 import com.stardevllc.staritemgenerators.common.model.*;
 import com.stardevllc.starlib.clock.ClockManager;
-import com.stardevllc.starlib.objects.registry.RegistryObject;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.LivingEntity;
@@ -43,14 +42,14 @@ public final class StarItemGenerators {
     }
     
     public static boolean handleItemPickup(LivingEntity entity, Item item, int remaining) {
-        for (RegistryObject<String, ItemGenerator> entry : generatorRegistry) {
-            for (SpawnedItem spawnedItem : entry.get().getSpawnedItems()) {
+        for (ItemGenerator entry : generatorRegistry.values()) {
+            for (SpawnedItem spawnedItem : entry.getSpawnedItems()) {
                 if (item.equals(spawnedItem.item())) {
                     spawnedItem.entry().handleItemPickup(entity, item, spawnedItem.entry());
                 }
             }
             
-            entry.get().removedSpawnedItem(item);
+            entry.removedSpawnedItem(item);
         }
         
         return false;

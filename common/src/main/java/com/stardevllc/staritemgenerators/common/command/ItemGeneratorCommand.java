@@ -4,7 +4,7 @@ import com.stardevllc.itembuilder.ItemBuilders;
 import com.stardevllc.smaterial.SMaterial;
 import com.stardevllc.staritemgenerators.common.model.*;
 import com.stardevllc.staritemgenerators.common.model.ItemEntry.Flag;
-import com.stardevllc.starlib.objects.registry.RegistryObject;
+import com.stardevllc.starlib.registry.RegistryKey;
 import com.stardevllc.starlib.time.TimeFormat;
 import com.stardevllc.starlib.time.TimeParser;
 import com.stardevllc.starmclib.Position;
@@ -14,7 +14,8 @@ import com.stardevllc.starmclib.command.flags.FlagResult;
 import com.stardevllc.starmclib.command.flags.type.PresenceFlag;
 import com.stardevllc.starmclib.command.params.*;
 import com.stardevllc.starmclib.plugin.ExtendedJavaPlugin;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.command.*;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -152,27 +153,27 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
             
             ItemGenerator itemGenerator = new ItemGenerator(id, new ArrayList<>(), pos1, pos2);
             
-            RegistryObject<String, ItemGenerator> object = registry.register(itemGenerator);
-            if (object == null) {
+            registry.register(RegistryKey.of(itemGenerator.getId()), itemGenerator);
+            if (!registry.containsKey(itemGenerator.getId())) {
                 colors.coloredLegacy(sender, "&cFailed to register the new item generator");
                 return true;
             }
             
-            colors.coloredLegacy(sender, "&eCreated an Item Generator with the id &b" + object.getKey());
+            colors.coloredLegacy(sender, "&eCreated an Item Generator with the id &b" + id);
             
             if (flagResults.isPresent(Flags.Create.INIT)) {
                 itemGenerator.init(player.getWorld());
-                colors.coloredLegacy(sender, "&eInitialized the Item Generator &b" + object.getKey() + " &ein world &b" + player.getWorld().getName());
+                colors.coloredLegacy(sender, "&eInitialized the Item Generator &b" + id + " &ein world &b" + player.getWorld().getName());
             }
             
             if (flagResults.isPresent(Flags.Create.START)) {
                 itemGenerator.start();
-                colors.coloredLegacy(sender, "&eStarted the Item Generator &b" + object.getKey());
+                colors.coloredLegacy(sender, "&eStarted the Item Generator &b" + id);
             }
             
             if (flagResults.isPresent(Flags.Create.SELECT)) {
-                selectedGenerators.put(player.getUniqueId(), object.getKey());
-                colors.coloredLegacy(sender, "&eSelected the Item Generator &b" + object.getKey());
+                selectedGenerators.put(player.getUniqueId(), id);
+                colors.coloredLegacy(sender, "&eSelected the Item Generator &b" + id);
             }
             
             return true;
@@ -217,8 +218,8 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
             lines.add("  &eMin: &b(" + min.getBlockX() + ", " + min.getBlockY() + ", " + min.getBlockZ() + ")");
             Position max = generator.getBoundsMin();
             lines.add("  &eMax: &b(" + max.getBlockX() + ", " + max.getBlockY() + ", " + max.getBlockZ() + ")");
-            lines.add("&eInitialized: " + formatBoolean(generator.initProperty().get()));
-            lines.add("&eRunning: " + formatBoolean(generator.runningProperty().get()));
+            lines.add("&eInitialized: " + formatBoolean(generator.isInitialized()));
+            lines.add("&eRunning: " + formatBoolean(generator.isRunning()));
             lines.add("&eWorld: &b" + (generator.getWorld() != null ? generator.getWorld().getName() : "None"));
             lines.add("&eSpawned Items: &b" + generator.getSpawnedItemsCount());
             lines.add("&eEntries: ");
@@ -257,7 +258,7 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
         }
         
         if (args[0].equalsIgnoreCase("init")) {
-            if (generator.initProperty().get()) {
+            if (generator.isInitialized()) {
                 colors.coloredLegacy(sender, "&cGenerator " + generator.getId() + " is already initialized.");
                 return true;
             }
@@ -265,7 +266,7 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
             generator.init(player.getWorld());
             colors.coloredLegacy(sender, "&eInitialized the Item Generator &b" + generator.getId() + " &ein world &b" + player.getWorld().getName());
         } else if (args[0].equalsIgnoreCase("start")) {
-            if (generator.runningProperty().get()) {
+            if (generator.isRunning()) {
                 colors.coloredLegacy(sender, "&cGenerator " + generator.getId() + " is already running.");
                 return true;
             }
@@ -273,7 +274,7 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
             generator.start();
             colors.coloredLegacy(sender, "&eStarted the Item Generator &b" + generator.getId());
         } else if (args[0].equalsIgnoreCase("stop")) {
-            if (!generator.runningProperty().get()) {
+            if (!generator.isRunning()) {
                 colors.coloredLegacy(sender, "&cGenerator " + generator.getId() + " is not running.");
                 return true;
             }
@@ -288,7 +289,7 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
                 return true;
             }
             
-            if (!generator.initProperty().get()) {
+            if (!generator.isInitialized()) {
                 colors.coloredLegacy(sender, "&cThe generator must be initialized to add an item");
                 return true;
             }
@@ -302,16 +303,16 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
             ParamResult paramResults = this.cmdParams.parse(args);
             args = paramResults.args();
             
-            Optional<SMaterial> matOpt = SMaterial.matchXMaterial(paramResults.getValue(Params.Item.MATERIAL));
+            Optional<SMaterial> matOpt = SMaterial.matchSMaterial(paramResults.getValue(Params.Item.MATERIAL));
             if (matOpt.isEmpty()) {
-                colors.coloredLegacy(sender, "&cYou provided an invalid material " + args[1]);
+                colors.coloredLegacy(sender, "&cYou provided an invalid material " + paramResults.getValue(Params.Item.MATERIAL));
                 return true;
             }
             
             SMaterial material = matOpt.get();
             
             if (!material.isSupported()) {
-                colors.coloredLegacy(sender, "&cYou provided an invalid material " + args[1]);
+                colors.coloredLegacy(sender, "&cYou provided an invalid material " + paramResults.getValue(Params.Item.MATERIAL));
                 return true;
             }
             
