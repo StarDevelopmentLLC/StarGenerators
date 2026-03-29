@@ -67,14 +67,17 @@ public class ItemGenerator {
         this.itemEntries = new ObservableArrayList<>(itemEntries);
         this.initProperty = new BooleanProperty(this, "init", false);
         this.itemEntries.addListener(c -> {
-            if (c.added() != null) {
+            ItemEntry itemEntry = c.added();
+            if (itemEntry != null) {
                 ItemEntryHolder holder = new ItemEntryHolder(c.added());
                 this.holders.add(holder);
                 
                 holder.callbackId = this.stopwatch.addRepeatingCallback(snapshot -> {
-                    List<Item> items = c.added().spawn(world, ItemGenerator.this);
-                    for (Item item : items) {
-                        addSpawnedItem(c.added().getId(), item);
+                    int currentItemCount = getSpawnedItemsCount(itemEntry.getId());
+                    if (currentItemCount < itemEntry.getMaxItems()) {
+                        for (Item item : itemEntry.spawn(world, ItemGenerator.this)) {
+                            addSpawnedItem(itemEntry.getId(), item);
+                        }
                     }
                 }, holder.period);
             } else if (c.removed() != null) {
