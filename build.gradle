@@ -9,6 +9,7 @@ version = '0.1.0'
 repositories {
     mavenLocal()
     mavenCentral()
+    maven {url "https://repo.stardevllc.com/releases"}
 }
 
 publishing {
@@ -32,6 +33,8 @@ publishing {
 
 dependencies {
     compileOnly "org.spigotmc:spigot-api:${spigotVersion}"
+    compileOnly "com.stardevllc:StarCore:${starcoreVersion}"
+    compileOnly "com.stardevllc:StarItems:${staritemsVersion}"
 }
 
 java {

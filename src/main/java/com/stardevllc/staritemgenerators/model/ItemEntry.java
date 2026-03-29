@@ -1,10 +1,10 @@
-package com.stardevllc.staritemgenerators.common.model;
+package com.stardevllc.staritemgenerators.model;
 
 import com.stardevllc.itembuilder.common.ItemBuilder;
-import com.stardevllc.staritemgenerators.common.model.listener.ItemPickupListener;
-import com.stardevllc.staritemgenerators.common.model.listener.ItemSpawnListener;
+import com.stardevllc.staritemgenerators.model.listener.ItemPickupListener;
+import com.stardevllc.staritemgenerators.model.listener.ItemSpawnListener;
 import com.stardevllc.starlib.clock.clocks.Timer;
-import com.stardevllc.starmclib.Position;
+import com.stardevllc.Position;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Item;

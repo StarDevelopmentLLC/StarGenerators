@@ -1,4 +1,4 @@
-package com.stardevllc.staritemgenerators.common.model;
+package com.stardevllc.staritemgenerators.model;
 
 import com.stardevllc.starlib.clock.ClockManager;
 import com.stardevllc.starlib.injector.FieldInjector;

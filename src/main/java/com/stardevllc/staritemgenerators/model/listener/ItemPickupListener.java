@@ -1,7 +1,7 @@
-package com.stardevllc.staritemgenerators.common.model.listener;
+package com.stardevllc.staritemgenerators.model.listener;
 
-import com.stardevllc.staritemgenerators.common.model.ItemEntry;
-import com.stardevllc.staritemgenerators.common.model.ItemGenerator;
+import com.stardevllc.staritemgenerators.model.ItemEntry;
+import com.stardevllc.staritemgenerators.model.ItemGenerator;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.LivingEntity;
 

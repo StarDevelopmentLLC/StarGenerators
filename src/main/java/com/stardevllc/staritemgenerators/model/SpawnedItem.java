@@ -1,4 +1,4 @@
-package com.stardevllc.staritemgenerators.common.model;
+package com.stardevllc.staritemgenerators.model;
 
 import org.bukkit.entity.Item;
 

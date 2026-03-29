@@ -1,12 +1,12 @@
-package com.stardevllc.staritemgenerators.common.model;
+package com.stardevllc.staritemgenerators.model;
 
 import com.stardevllc.starlib.clock.ClockManager;
 import com.stardevllc.starlib.collections.observable.list.ObservableArrayList;
 import com.stardevllc.starlib.collections.observable.list.ObservableList;
 import com.stardevllc.starlib.injector.Inject;
 import com.stardevllc.starlib.values.property.BooleanProperty;
-import com.stardevllc.starmclib.Cuboid;
-import com.stardevllc.starmclib.Position;
+import com.stardevllc.Cuboid;
+import com.stardevllc.Position;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;

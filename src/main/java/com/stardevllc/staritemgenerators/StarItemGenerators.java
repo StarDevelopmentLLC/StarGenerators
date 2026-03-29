@@ -1,6 +1,6 @@
-package com.stardevllc.staritemgenerators.common;
+package com.stardevllc.staritemgenerators;
 
-import com.stardevllc.staritemgenerators.common.model.*;
+import com.stardevllc.staritemgenerators.model.*;
 import com.stardevllc.starlib.clock.ClockManager;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Item;

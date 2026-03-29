@@ -1,9 +1,8 @@
-package com.stardevllc.staritemgenerators.plugin;
+package com.stardevllc.staritemgenerators;
 
-import com.stardevllc.staritemgenerators.common.StarItemGenerators;
-import com.stardevllc.staritemgenerators.common.command.ItemGeneratorCommand;
-import com.stardevllc.staritemgenerators.common.listener.GeneratorListener;
-import com.stardevllc.starmclib.plugin.ExtendedJavaPlugin;
+import com.stardevllc.plugin.ExtendedJavaPlugin;
+import com.stardevllc.staritemgenerators.command.ItemGeneratorCommand;
+import com.stardevllc.staritemgenerators.listener.GeneratorListener;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerPickupItemEvent;
