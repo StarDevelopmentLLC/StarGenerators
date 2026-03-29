@@ -1,9 +1,10 @@
 package com.stardevllc.staritemgenerators.command;
 
-import com.stardevllc.itembuilder.ItemBuilders;
+import com.stardevllc.itembuilder.common.ItemBuilder;
 import com.stardevllc.smaterial.SMaterial;
 import com.stardevllc.staritemgenerators.model.*;
 import com.stardevllc.staritemgenerators.model.ItemEntry.Flag;
+import com.stardevllc.staritems.ItemBuilders;
 import com.stardevllc.starlib.registry.RegistryKey;
 import com.stardevllc.starlib.time.TimeFormat;
 import com.stardevllc.starlib.time.TimeParser;
@@ -61,6 +62,7 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
             private static final Param<Boolean> INVENTORY_PICKUP = new Param<>("ip", "Inventory Pickup", Boolean.class, false);
             private static final Param<Boolean> PERSISTENT = new Param<>("persistent", "Persistent", Boolean.class, true);
             private static final Param<Integer> MAX_COUNT = new Param<>("maxitems", "Max Items", Integer.class, Integer.MAX_VALUE);
+            public static final Param<Integer> STACK_SIZE = new Param<>("ss", "Stack Size", Integer.class, 1);
         }
     }
     
@@ -70,7 +72,7 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
         Bukkit.getServer().getPluginManager().registerEvents(this, plugin);
         
         this.cmdFlags = new CmdFlags(Flags.DEBUG, Flags.Create.SELECT, Flags.Create.INIT, Flags.Create.START);
-        this.cmdParams = new CmdParams(Params.Item.ID, Params.Item.MATERIAL, Params.Item.COOLDOWN, Params.Item.INVULNERABLE, Params.Item.INVENTORY_PICKUP, Params.Item.PERSISTENT, Params.Item.MAX_COUNT);
+        this.cmdParams = new CmdParams(Params.Item.ID, Params.Item.MATERIAL, Params.Item.COOLDOWN, Params.Item.INVULNERABLE, Params.Item.INVENTORY_PICKUP, Params.Item.PERSISTENT, Params.Item.MAX_COUNT, Params.Item.STACK_SIZE);
     }
     
     @Override
@@ -237,8 +239,7 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
                 lines.add("    &eSpawned Items: &b" + generator.getSpawnedItemsCount(entry.getId()));
                 Position pos = entry.getSpawnPosition();
                 lines.add("    &ePos: &b(" + pos.getBlockX() + ", " + pos.getBlockY() + ", " + pos.getBlockZ() + ")");
-                lines.add("    &eWorld: &b" + (entry.getWorld() != null ? entry.getWorld().getName() : "None"));
-                lines.add("    &eNext Spawn: &b" + (entry.getTimer() != null ? timeFormat.format(entry.getTimer().getTime())/* + " (" + entry.getTimer().statusProperty().get().name() + ")" */: "0s"));
+                lines.add("    &eNext Spawn: &b" + timeFormat.format(generator.getNextSpawn(entry)));
             }
             
             lines.forEach(line -> colors.coloredLegacy(sender, line));
@@ -284,7 +285,7 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
         } else if (args[0].equalsIgnoreCase("additem")) {
             if (!(args.length > 1)) {
                 colors.coloredLegacy(sender, "&cUsage: /" + label + " " + args[0] + " <params>");
-                List<String> paramsList = List.of(Params.Item.ID.id(), Params.Item.MATERIAL.id(), Params.Item.COOLDOWN.id(), Params.Item.INVULNERABLE.id(), Params.Item.INVENTORY_PICKUP.id(), Params.Item.PERSISTENT.id(), Params.Item.MAX_COUNT.id());
+                List<String> paramsList = List.of(Params.Item.ID.id(), Params.Item.MATERIAL.id(), Params.Item.COOLDOWN.id(), Params.Item.INVULNERABLE.id(), Params.Item.INVENTORY_PICKUP.id(), Params.Item.PERSISTENT.id(), Params.Item.MAX_COUNT.id(), Params.Item.STACK_SIZE.id());
                 colors.coloredLegacy(sender, "  &cParams: " + String.join(", ", paramsList));
                 return true;
             }
@@ -315,6 +316,11 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
                 colors.coloredLegacy(sender, "&cYou provided an invalid material " + paramResults.getValue(Params.Item.MATERIAL));
                 return true;
             }
+            
+            ItemBuilder<?, ?> itemBuilder = ItemBuilders.of(material);
+            
+            int stackSize = paramResults.getValue(Params.Item.STACK_SIZE);
+            itemBuilder.amount(stackSize);
             
             String id = paramResults.getValue(Params.Item.ID);
             
@@ -349,7 +355,7 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
                 flags.add(Flag.INVENTORY_PICKUP);
             }
             
-            ItemEntry itemEntry = new ItemEntry(material.name().toLowerCase(), ItemBuilders.of(material), cooldown, maxItems, new Position(location.getBlockX(), location.getBlockY(), location.getBlockZ()), flags);
+            ItemEntry itemEntry = new ItemEntry(id, itemBuilder, cooldown, maxItems, new Position(location.getBlockX(), location.getBlockY(), location.getBlockZ()), flags);
             generator.addItemEntry(itemEntry);
             
             if (flagResults.isPresent(Flags.DEBUG)) {

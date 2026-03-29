@@ -1,10 +1,9 @@
 package com.stardevllc.staritemgenerators.model;
 
+import com.stardevllc.Position;
 import com.stardevllc.itembuilder.common.ItemBuilder;
 import com.stardevllc.staritemgenerators.model.listener.ItemPickupListener;
 import com.stardevllc.staritemgenerators.model.listener.ItemSpawnListener;
-import com.stardevllc.starlib.clock.clocks.Timer;
-import com.stardevllc.Position;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Item;
@@ -59,21 +58,6 @@ public class ItemEntry {
     protected Position spawnPosition;
     
     /**
-     * The timer instance for controlling when items spawn
-     */
-    protected Timer timer;
-    
-    /**
-     * This is the generator instance
-     */
-    protected ItemGenerator generator;
-    
-    /**
-     * This is the world that the items are to be spawned in
-     */
-    protected World world;
-    
-    /**
      * The boolean based flags for the entry
      */
     protected final Set<Flag> flags = EnumSet.noneOf(Flag.class);
@@ -103,31 +87,6 @@ public class ItemEntry {
         }
     }
     
-    public void init(ItemGenerator generator, World world) {
-        this.generator = generator;
-        this.world = world;
-        
-        if (this.timer != null) {
-            this.timer.cancel();
-        }
-        
-        this.timer = generator.getClockManager().createTimer(cooldown);
-        this.timer.addRepeatingCallback(snapshot -> {
-            if (this.world != null && this.generator != null) {
-                if (generator.runningProperty.get()) {
-                    int currentCount = generator.getSpawnedItemsCount(getId());
-                    if (currentCount < this.maxItems) {
-                        generator.addSpawnedItem(getId(), spawnItem(world));
-                    }
-                }
-            }
-            
-            this.timer.setLengthAndReset(cooldown);
-        }, cooldown);
-        
-        this.timer.start();
-    }
-    
     public void addSpawnListener(ItemSpawnListener listener) {
         this.itemSpawnListeners.add(listener);
     }
@@ -142,56 +101,26 @@ public class ItemEntry {
         this.itemPickupListeners.add(listener);
     }
     
-    public void handleItemPickup(LivingEntity entity, Item item, ItemEntry itemEntry) {
+    public void handleItemPickup(LivingEntity entity, Item item, ItemEntry itemEntry, ItemGenerator generator) {
         for (ItemPickupListener listener : this.itemPickupListeners) {
             listener.onPickup(entity, item, itemEntry, generator);
         }
     }
     
-    public void start() {
-        if (this.timer != null) {
-            this.timer.start();
-        }
-    }
-    
-    public void stop() {
-        if (this.timer != null) {
-            this.timer.setLengthAndReset(this.cooldown);
-            this.timer.pause();
-        }
-    }
-    
-    public void pause() {
-        if (this.timer != null) {
-            this.timer.pause();
-        }
-    }
-    
-    public void unpause() {
-        if (this.timer != null) {
-            this.timer.unpause();
-        }
-    }
-    
-    public void reset() {
-        this.generator = null;
-        this.world = null;
-        if (this.timer != null) {
-            this.timer.cancel();
-        }
-        this.timer = null;
-    }
-    
-    public Timer getTimer() {
-        return timer;
-    }
-    
-    public Item spawnItem(World world) {
+    public List<Item> spawn(World world, ItemGenerator generator) {
         Location location = spawnPosition.toBlockLocation(world).add(0.5, 0, 0.5);
-        Item item = world.dropItem(location, createItemStack());
-        item.setVelocity(new Vector());
-        handleItemSpawn(item, this, this.generator);
-        return item;
+        ItemStack itemStack = createItemStack();
+        int amount = itemStack.getAmount();
+        itemStack.setAmount(1);
+        List<Item> items = new ArrayList<>();
+        for (int i = 0; i < amount; i++) {
+            Item item = world.dropItem(location, itemStack);
+            item.setVelocity(new Vector());
+            handleItemSpawn(item, this, generator);
+            items.add(item);
+        }
+        
+        return items;
     }
     
     public String getId() {
@@ -216,9 +145,6 @@ public class ItemEntry {
     
     public void setCooldown(long cooldown) {
         this.cooldown = cooldown;
-        if (this.timer != null) {
-            this.timer.setLengthAndReset(cooldown);
-        }
     }
     
     public void setMaxItems(int maxItems) {
@@ -227,10 +153,6 @@ public class ItemEntry {
     
     public Position getSpawnPosition() {
         return spawnPosition;
-    }
-    
-    public World getWorld() {
-        return world;
     }
     
     public Set<Flag> getFlags() {

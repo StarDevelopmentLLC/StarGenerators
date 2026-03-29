@@ -45,7 +45,7 @@ public final class StarItemGenerators {
         for (ItemGenerator entry : generatorRegistry.values()) {
             for (SpawnedItem spawnedItem : entry.getSpawnedItems()) {
                 if (item.equals(spawnedItem.item())) {
-                    spawnedItem.entry().handleItemPickup(entity, item, spawnedItem.entry());
+                    spawnedItem.entry().handleItemPickup(entity, item, spawnedItem.entry(), entry);
                 }
             }
             
