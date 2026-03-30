@@ -1,6 +1,6 @@
-package com.stardevllc.staritemgenerators;
+package com.stardevllc.stargenerators;
 
-import com.stardevllc.staritemgenerators.model.*;
+import com.stardevllc.stargenerators.model.*;
 import com.stardevllc.starlib.clock.ClockManager;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Item;
@@ -9,8 +9,8 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public final class StarItemGenerators {
-    private StarItemGenerators() {
+public final class StarGenerators {
+    private StarGenerators() {
     }
     
     private static JavaPlugin plugin;
@@ -18,12 +18,12 @@ public final class StarItemGenerators {
     private static GeneratorRegistry generatorRegistry;
     
     public static void init(JavaPlugin plugin) {
-        if (StarItemGenerators.plugin != null) {
-            plugin.getLogger().severe("StarItemGenerators has already been initialized by " + StarItemGenerators.plugin.getName());
+        if (StarGenerators.plugin != null) {
+            plugin.getLogger().severe("StarGenerators has already been initialized by " + StarGenerators.plugin.getName());
             return;
         }
         
-        StarItemGenerators.plugin = plugin;
+        StarGenerators.plugin = plugin;
         
         ClockManager clockManager;
         
@@ -35,7 +35,7 @@ public final class StarItemGenerators {
             clockManager = cmreg.getProvider();
         }
         
-        StarItemGenerators.generatorRegistry = new GeneratorRegistry(clockManager);
+        StarGenerators.generatorRegistry = new GeneratorRegistry(clockManager);
         Bukkit.getServer().getServicesManager().register(GeneratorRegistry.class, generatorRegistry, plugin, ServicePriority.Normal);
         
         //TODO Load from files (After ItemBuilder saving and loading is properly implemented

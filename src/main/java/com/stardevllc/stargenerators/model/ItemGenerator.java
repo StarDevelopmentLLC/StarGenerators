@@ -1,32 +1,31 @@
-package com.stardevllc.staritemgenerators.model;
+package com.stardevllc.stargenerators.model;
 
 import com.stardevllc.Cuboid;
 import com.stardevllc.Position;
 import com.stardevllc.starlib.clock.ClockManager;
 import com.stardevllc.starlib.clock.callback.CallbackPeriod;
 import com.stardevllc.starlib.clock.clocks.Stopwatch;
-import com.stardevllc.starlib.collections.observable.list.ObservableArrayList;
-import com.stardevllc.starlib.collections.observable.list.ObservableList;
+import com.stardevllc.starlib.collections.observable.map.ObservableHashMap;
+import com.stardevllc.starlib.collections.observable.map.ObservableMap;
 import com.stardevllc.starlib.injector.Inject;
+import com.stardevllc.starlib.objects.key.Key;
 import com.stardevllc.starlib.values.property.BooleanProperty;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 
 import java.util.*;
 
-public class ItemGenerator {
+public class ItemGenerator implements Generator<ItemEntry> {
     /**
      * A unique identifier for the generator itself <br>
      * It is best to auto-generate this id and have the entry ids be readable
      */
-    protected String id;
+    protected Key key;
     
-    /**
-     * The entries that control what items spawn in the generator
-     */
-    protected final ObservableList<ItemEntry> itemEntries;
+    protected String name;
+    
+    protected final ObservableMap<Key, ItemEntry> entries = new ObservableHashMap<>();
     
     private final List<ItemEntryHolder> holders = new ArrayList<>();
     
@@ -51,6 +50,11 @@ public class ItemGenerator {
     
     protected Cuboid region;
     
+    @Override
+    public String getName() {
+        return name;
+    }
+    
     private static final class ItemEntryHolder {
         private final ItemEntry itemEntry;
         private final CallbackPeriod period;
@@ -62,21 +66,26 @@ public class ItemGenerator {
         }
     }
     
-    public ItemGenerator(String id, List<ItemEntry> itemEntries, Position boundsMin, Position boundsMax) {
-        this.id = id;
-        this.itemEntries = new ObservableArrayList<>(itemEntries);
+    public ItemGenerator(Key id, Collection<ItemEntry> itemEntries, Position boundsMin, Position boundsMax) {
+        this.key = id;
+        
+        for (ItemEntry itemEntry : itemEntries) {
+            this.entries.put(itemEntry.getKey(), itemEntry);
+        }
+        
         this.initProperty = new BooleanProperty(this, "init", false);
-        this.itemEntries.addListener(c -> {
+        
+        this.entries.addListener(c -> {
             ItemEntry itemEntry = c.added();
             if (itemEntry != null) {
                 ItemEntryHolder holder = new ItemEntryHolder(c.added());
                 this.holders.add(holder);
                 
                 holder.callbackId = this.stopwatch.addRepeatingCallback(snapshot -> {
-                    int currentItemCount = getSpawnedItemsCount(itemEntry.getId());
+                    int currentItemCount = getSpawnedItemsCount(itemEntry.getKey());
                     if (currentItemCount < itemEntry.getMaxItems()) {
                         for (Item item : itemEntry.spawn(world, ItemGenerator.this)) {
-                            addSpawnedItem(itemEntry.getId(), item);
+                            addSpawnedItem(itemEntry.getKey(), item);
                         }
                     }
                 }, holder.period);
@@ -84,7 +93,7 @@ public class ItemGenerator {
                 Iterator<ItemEntryHolder> iterator = this.holders.iterator();
                 while (iterator.hasNext()) {
                     ItemEntryHolder holder = iterator.next();
-                    if (holder.itemEntry.getId().equals(c.removed().getId())) {
+                    if (holder.itemEntry.getKey().equals(c.removed().getKey())) {
                         this.stopwatch.removeCallback(holder.callbackId);
                     }
                     iterator.remove();
@@ -96,6 +105,7 @@ public class ItemGenerator {
         this.boundsMax = boundsMax;
     }
     
+    @Override
     public void init(World world) {
         this.world = world;
         this.initProperty.set(true);
@@ -109,7 +119,7 @@ public class ItemGenerator {
     
     public long getNextSpawn(ItemEntry entry) {
         for (ItemEntryHolder holder : this.holders) {
-            if (holder.itemEntry.getId().equals(entry.getId())) {
+            if (holder.itemEntry.getKey().equals(entry.getKey())) {
                 long nextRun = this.stopwatch.getNextRun(holder.callbackId);
                 return nextRun - this.stopwatch.getTime();
             }
@@ -118,44 +128,41 @@ public class ItemGenerator {
         return 0;
     }
     
+    @Override
     public void start() {
         this.stopwatch.unpause();
     }
     
+    @Override
     public void stop() {
         this.stopwatch.pause();
+    }
+    
+    @Override
+    public void addEntry(ItemEntry entry) {
+        this.entries.put(entry.getKey(), entry);
+    }
+    
+    @Override
+    public ItemEntry getEntry(Key id) {
+        return this.entries.get(id);
+    }
+    
+    @Override
+    public Collection<ItemEntry> getEntries() {
+        return new ArrayList<>(this.entries.values());
     }
     
     public Cuboid getRegion() {
         return region;
     }
     
-    public boolean contains(Location location) {
-        if (location == null) {
-            return false;
-        }
-        
-        if (region == null) {
-            return false;
-        }
-        
-        return region.contains(location);
-    }
-    
-    public boolean contains(Entity entity) {
-        if (entity == null) {
-            return false;
-        }
-        
-        return contains(entity.getLocation());
-    }
-    
     public Set<SpawnedItem> getSpawnedItems() {
         return new HashSet<>(spawnedItems);
     }
     
-    public void addSpawnedItem(String entryId, Item item) {
-        ItemEntry entry = getItemEntry(entryId);
+    public void addSpawnedItem(Key entryId, Item item) {
+        ItemEntry entry = getEntry(entryId);
         if (entry == null) {
             return;
         }
@@ -168,10 +175,10 @@ public class ItemGenerator {
         this.spawnedItems.removeIf(spawnedItem -> spawnedItem.item().equals(item));
     }
     
-    public int getSpawnedItemsCount(String entryId) {
+    public int getSpawnedItemsCount(Key entryId) {
         int count = 0;
         for (SpawnedItem spawnedItem : this.spawnedItems) {
-            if (spawnedItem.entry().getId().equalsIgnoreCase(entryId)) {
+            if (spawnedItem.entry().getKey().equals(entryId)) {
                 count++;
             }
         }
@@ -183,16 +190,9 @@ public class ItemGenerator {
         return this.spawnedItems.size();
     }
     
-    public String getId() {
-        return id;
-    }
-    
-    public void addItemEntry(ItemEntry itemEntry) {
-        this.itemEntries.add(itemEntry);
-    }
-    
-    public List<ItemEntry> getItemEntries() {
-        return new ArrayList<>(itemEntries);
+    @Override
+    public Key getKey() {
+        return key;
     }
     
     public Position getBoundsMin() {
@@ -219,23 +219,7 @@ public class ItemGenerator {
         return world;
     }
     
-    public ItemEntry getItemEntry(String entryId) {
-        for (ItemEntry itemEntry : this.itemEntries) {
-            if (itemEntry.getId().equalsIgnoreCase(entryId)) {
-                return itemEntry;
-            }
-        }
-        
-        return null;
-    }
-    
-    public boolean hasEntry(String entryId) {
-        for (ItemEntry itemEntry : this.itemEntries) {
-            if (itemEntry.getId().equalsIgnoreCase(entryId)) {
-                return true;
-            }
-        }
-        
-        return false;
+    public boolean hasEntry(Key entryId) {
+        return this.entries.containsKey(entryId);
     }
 }

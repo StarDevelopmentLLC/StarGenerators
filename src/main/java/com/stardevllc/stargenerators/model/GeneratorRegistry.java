@@ -1,8 +1,10 @@
-package com.stardevllc.staritemgenerators.model;
+package com.stardevllc.stargenerators.model;
 
 import com.stardevllc.starlib.clock.ClockManager;
 import com.stardevllc.starlib.injector.FieldInjector;
 import com.stardevllc.starlib.injector.SimpleFieldInjector;
+import com.stardevllc.starlib.objects.key.Key;
+import com.stardevllc.starlib.objects.key.Keys;
 import com.stardevllc.starlib.registry.*;
 
 import java.util.HashMap;
@@ -15,7 +17,7 @@ public class GeneratorRegistry extends AbstractRegistry<ItemGenerator> {
     private final FieldInjector injector;
     
     public GeneratorRegistry(ClockManager clockManager) {
-        super(ItemGenerator.class, RegistryKey.of("itemgenerators"), "Item Generators", new HashMap<>(), null, false, null, Set.of());
+        super(ItemGenerator.class, Keys.of("itemgenerators"), "Item Generators", new HashMap<>(), null, false, null, Set.of());
         this.clockManager = clockManager;
         
         this.injector = new SimpleFieldInjector();
@@ -24,7 +26,7 @@ public class GeneratorRegistry extends AbstractRegistry<ItemGenerator> {
     }
     
     @Override
-    protected void callAdditionalRegisterActions(RegistryKey key, ItemGenerator value, ItemGenerator oldValue) {
+    protected void callAdditionalRegisterActions(Key key, ItemGenerator value, ItemGenerator oldValue) {
         injector.inject(value);
     }
     

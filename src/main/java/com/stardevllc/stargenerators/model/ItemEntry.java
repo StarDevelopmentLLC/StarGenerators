@@ -1,9 +1,11 @@
-package com.stardevllc.staritemgenerators.model;
+package com.stardevllc.stargenerators.model;
 
 import com.stardevllc.Position;
 import com.stardevllc.itembuilder.common.ItemBuilder;
-import com.stardevllc.staritemgenerators.model.listener.ItemPickupListener;
-import com.stardevllc.staritemgenerators.model.listener.ItemSpawnListener;
+import com.stardevllc.stargenerators.model.listener.ItemPickupListener;
+import com.stardevllc.stargenerators.model.listener.ItemSpawnListener;
+import com.stardevllc.starlib.objects.key.Key;
+import com.stardevllc.starlib.objects.key.impl.StringKey;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Item;
@@ -13,7 +15,7 @@ import org.bukkit.util.Vector;
 
 import java.util.*;
 
-public class ItemEntry {
+public class ItemEntry implements GeneratorEntry {
     
     public enum Flag {
         /**
@@ -35,7 +37,7 @@ public class ItemEntry {
     /**
      * A unique identifier for the item entry. This is per generator
      */
-    protected String id;
+    protected Key key;
     
     /**
      * The builder used to create items
@@ -65,8 +67,8 @@ public class ItemEntry {
     private final List<ItemPickupListener> itemPickupListeners = new ArrayList<>();
     private final List<ItemSpawnListener> itemSpawnListeners = new ArrayList<>();
     
-    public ItemEntry(String id, ItemBuilder<?, ?> builder, long cooldown, int maxItems, Position spawnPosition, Flag... flags) {
-        this.id = id;
+    public ItemEntry(String key, ItemBuilder<?, ?> builder, long cooldown, int maxItems, Position spawnPosition, Flag... flags) {
+        this.key = new StringKey(key);
         this.builder = builder;
         this.cooldown = cooldown;
         this.maxItems = maxItems;
@@ -76,8 +78,8 @@ public class ItemEntry {
         }
     }
     
-    public ItemEntry(String id, ItemBuilder<?, ?> builder, long cooldown, int maxItems, Position spawnPosition, List<Flag> flags) {
-        this.id = id;
+    public ItemEntry(String key, ItemBuilder<?, ?> builder, long cooldown, int maxItems, Position spawnPosition, List<Flag> flags) {
+        this.key = new StringKey(key);
         this.builder = builder;
         this.cooldown = cooldown;
         this.maxItems = maxItems;
@@ -123,8 +125,9 @@ public class ItemEntry {
         return items;
     }
     
-    public String getId() {
-        return id;
+    @Override
+    public Key getKey() {
+        return key;
     }
     
     public ItemBuilder<?, ?> getBuilder() {
@@ -135,6 +138,7 @@ public class ItemEntry {
         return builder.build();
     }
     
+    @Override
     public long getCooldown() {
         return cooldown;
     }
@@ -143,6 +147,7 @@ public class ItemEntry {
         return maxItems;
     }
     
+    @Override
     public void setCooldown(long cooldown) {
         this.cooldown = cooldown;
     }

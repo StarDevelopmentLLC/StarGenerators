@@ -1,11 +1,13 @@
-package com.stardevllc.staritemgenerators.command;
+package com.stardevllc.stargenerators.command;
 
 import com.stardevllc.itembuilder.common.ItemBuilder;
 import com.stardevllc.smaterial.SMaterial;
-import com.stardevllc.staritemgenerators.model.*;
-import com.stardevllc.staritemgenerators.model.ItemEntry.Flag;
+import com.stardevllc.stargenerators.model.*;
+import com.stardevllc.stargenerators.model.ItemEntry.Flag;
 import com.stardevllc.staritems.ItemBuilders;
-import com.stardevllc.starlib.registry.RegistryKey;
+import com.stardevllc.starlib.objects.key.Key;
+import com.stardevllc.starlib.objects.key.Keys;
+import com.stardevllc.starlib.objects.key.impl.StringKey;
 import com.stardevllc.starlib.time.TimeFormat;
 import com.stardevllc.starlib.time.TimeParser;
 import com.stardevllc.Position;
@@ -35,7 +37,7 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
      * The generator selections based on each player <br>
      * It is stored as the generator id to make sure that memory leak chances are minimal
      */
-    private Map<UUID, String> selectedGenerators = new HashMap<>();
+    private Map<UUID, Key> selectedGenerators = new HashMap<>();
     private Map<UUID, Selection> positionSelection = new HashMap<>();
     
     private final CmdFlags cmdFlags;
@@ -127,7 +129,7 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
                 return true;
             }
             
-            String id = args[1];
+            Key id = Keys.of(args[1]);
             
             if (this.registry.containsKey(id)) {
                 colors.coloredLegacy(sender, "&cA generator with that name already exists.");
@@ -155,8 +157,8 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
             
             ItemGenerator itemGenerator = new ItemGenerator(id, new ArrayList<>(), pos1, pos2);
             
-            registry.register(RegistryKey.of(itemGenerator.getId()), itemGenerator);
-            if (!registry.containsKey(itemGenerator.getId())) {
+            registry.register(itemGenerator.getKey(), itemGenerator);
+            if (!registry.containsKey(itemGenerator.getKey())) {
                 colors.coloredLegacy(sender, "&cFailed to register the new item generator");
                 return true;
             }
@@ -191,18 +193,18 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
                 return true;
             }
             
-            selectedGenerators.put(player.getUniqueId(), generator.getId());
-            colors.coloredLegacy(sender, "&eSelected the Item Generator &b" + generator.getId());
+            selectedGenerators.put(player.getUniqueId(), generator.getKey());
+            colors.coloredLegacy(sender, "&eSelected the Item Generator &b" + generator.getKey());
             return true;
         } else if (args[0].equalsIgnoreCase("status")) {
-            String genId;
+            Key genId;
             if (args.length > 1) {
-                genId = args[1];
+                genId = Keys.of(args[1]);
             } else {
                 genId = this.selectedGenerators.get(player.getUniqueId());
             }
             
-            if (genId == null && genId.isBlank()) {
+            if (genId == null && genId.isEmpty()) {
                 colors.coloredLegacy(sender, "&cYou must provide a generator id or select a generator to use this command.");
                 return true;
             }
@@ -214,7 +216,7 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
             }
             
             List<String> lines = new LinkedList<>();
-            lines.add("&6Information for Item Generator &b" + generator.getId());
+            lines.add("&6Information for Item Generator &b" + generator.getKey());
             lines.add("&eBounds: ");
             Position min = generator.getBoundsMin();
             lines.add("  &eMin: &b(" + min.getBlockX() + ", " + min.getBlockY() + ", " + min.getBlockZ() + ")");
@@ -225,8 +227,8 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
             lines.add("&eWorld: &b" + (generator.getWorld() != null ? generator.getWorld().getName() : "None"));
             lines.add("&eSpawned Items: &b" + generator.getSpawnedItemsCount());
             lines.add("&eEntries: ");
-            for (ItemEntry entry : generator.getItemEntries()) {
-                lines.add("  &e" + entry.getId() + ":");
+            for (ItemEntry entry : generator.getEntries()) {
+                lines.add("  &e" + entry.getKey() + ":");
                 lines.add("    &eCooldown: &b" + timeFormat.format(entry.getCooldown()));
                 lines.add("    &eMax items: &b" + entry.getMaxItems());
                 List<String> flags = new ArrayList<>();
@@ -236,7 +238,7 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
                 
                 String flagsString = String.join(", ", flags);
                 lines.add("    &eFlags: &b" + (flagsString.isBlank() ? "None" : flagsString));
-                lines.add("    &eSpawned Items: &b" + generator.getSpawnedItemsCount(entry.getId()));
+                lines.add("    &eSpawned Items: &b" + generator.getSpawnedItemsCount(entry.getKey()));
                 Position pos = entry.getSpawnPosition();
                 lines.add("    &ePos: &b(" + pos.getBlockX() + ", " + pos.getBlockY() + ", " + pos.getBlockZ() + ")");
                 lines.add("    &eNext Spawn: &b" + timeFormat.format(generator.getNextSpawn(entry)));
@@ -246,8 +248,8 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
             return true;
         }
         
-        String genId = this.selectedGenerators.get(player.getUniqueId());
-        if (genId == null && genId.isBlank()) {
+        Key genId = this.selectedGenerators.get(player.getUniqueId());
+        if (genId == null && genId.isEmpty()) {
             colors.coloredLegacy(sender, "&cYou must have a generator selection to use that command.");
             return true;
         }
@@ -260,28 +262,28 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
         
         if (args[0].equalsIgnoreCase("init")) {
             if (generator.isInitialized()) {
-                colors.coloredLegacy(sender, "&cGenerator " + generator.getId() + " is already initialized.");
+                colors.coloredLegacy(sender, "&cGenerator " + generator.getKey() + " is already initialized.");
                 return true;
             }
             
             generator.init(player.getWorld());
-            colors.coloredLegacy(sender, "&eInitialized the Item Generator &b" + generator.getId() + " &ein world &b" + player.getWorld().getName());
+            colors.coloredLegacy(sender, "&eInitialized the Item Generator &b" + generator.getKey() + " &ein world &b" + player.getWorld().getName());
         } else if (args[0].equalsIgnoreCase("start")) {
             if (generator.isRunning()) {
-                colors.coloredLegacy(sender, "&cGenerator " + generator.getId() + " is already running.");
+                colors.coloredLegacy(sender, "&cGenerator " + generator.getKey() + " is already running.");
                 return true;
             }
             
             generator.start();
-            colors.coloredLegacy(sender, "&eStarted the Item Generator &b" + generator.getId());
+            colors.coloredLegacy(sender, "&eStarted the Item Generator &b" + generator.getKey());
         } else if (args[0].equalsIgnoreCase("stop")) {
             if (!generator.isRunning()) {
-                colors.coloredLegacy(sender, "&cGenerator " + generator.getId() + " is not running.");
+                colors.coloredLegacy(sender, "&cGenerator " + generator.getKey() + " is not running.");
                 return true;
             }
             
             generator.stop();
-            colors.coloredLegacy(sender, "&eStopped the Item Generator &b" + generator.getId());
+            colors.coloredLegacy(sender, "&eStopped the Item Generator &b" + generator.getKey());
         } else if (args[0].equalsIgnoreCase("additem")) {
             if (!(args.length > 1)) {
                 colors.coloredLegacy(sender, "&cUsage: /" + label + " " + args[0] + " <params>");
@@ -328,7 +330,7 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
                 id = material.name().toLowerCase();
             }
             
-            if (generator.hasEntry(id)) {
+            if (generator.hasEntry(new StringKey(id))) {
                 colors.coloredLegacy(sender, "&cAn item already exists by the name " + material.name().toLowerCase());
                 return true;
             }
@@ -356,15 +358,15 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
             }
             
             ItemEntry itemEntry = new ItemEntry(id, itemBuilder, cooldown, maxItems, new Position(location.getBlockX(), location.getBlockY(), location.getBlockZ()), flags);
-            generator.addItemEntry(itemEntry);
+            generator.addEntry(itemEntry);
             
             if (flagResults.isPresent(Flags.DEBUG)) {
-                itemEntry.addPickupListener((entity, item, entry, gen) -> colors.coloredLegacy(sender, "&8Picked up " + entry.getId()));
-                itemEntry.addSpawnListener((item, entry, gen) -> colors.coloredLegacy(sender, "&8Spawned " + entry.getId()));
+                itemEntry.addPickupListener((entity, item, entry, gen) -> colors.coloredLegacy(sender, "&8Picked up " + entry.getKey()));
+                itemEntry.addSpawnListener((item, entry, gen) -> colors.coloredLegacy(sender, "&8Spawned " + entry.getKey()));
             }
             
             List<String> msgLines = new LinkedList<>();
-            msgLines.add("&eYou added the item &b" + itemEntry.getId() + " &eto the generator &b" + generator.getId());
+            msgLines.add("&eYou added the item &b" + itemEntry.getKey() + " &eto the generator &b" + generator.getKey());
             
             if (maxItems == Integer.MAX_VALUE) {
                 msgLines.add("  &eMax Items: &bInfinite");

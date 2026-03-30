@@ -1,7 +1,7 @@
-package com.stardevllc.staritemgenerators.listener;
+package com.stardevllc.stargenerators.listener;
 
-import com.stardevllc.staritemgenerators.model.*;
-import com.stardevllc.staritemgenerators.model.ItemEntry.Flag;
+import com.stardevllc.stargenerators.model.*;
+import com.stardevllc.stargenerators.model.ItemEntry.Flag;
 import org.bukkit.entity.Item;
 import org.bukkit.event.*;
 import org.bukkit.event.entity.*;
