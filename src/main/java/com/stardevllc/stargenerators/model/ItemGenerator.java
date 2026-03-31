@@ -2,12 +2,11 @@ package com.stardevllc.stargenerators.model;
 
 import com.stardevllc.Cuboid;
 import com.stardevllc.Position;
-import com.stardevllc.starlib.clock.ClockManager;
+import com.stardevllc.stargenerators.StarGenerators;
 import com.stardevllc.starlib.clock.callback.CallbackPeriod;
 import com.stardevllc.starlib.clock.clocks.Stopwatch;
 import com.stardevllc.starlib.collections.observable.map.ObservableHashMap;
 import com.stardevllc.starlib.collections.observable.map.ObservableMap;
-import com.stardevllc.starlib.injector.Inject;
 import com.stardevllc.starlib.objects.key.Key;
 import com.stardevllc.starlib.values.property.BooleanProperty;
 import org.bukkit.Location;
@@ -37,10 +36,7 @@ public class ItemGenerator implements Generator<ItemEntry> {
     /**
      * Since stopwatches are infinite clocks using longs to track time, we can use it to control timings of the item generation
      */
-    protected Stopwatch stopwatch;
-    
-    @Inject
-    protected ClockManager clockManager;
+    protected final Stopwatch stopwatch;
     
     protected World world;
     
@@ -66,14 +62,22 @@ public class ItemGenerator implements Generator<ItemEntry> {
         }
     }
     
+    public ItemGenerator(Key key, Position boundsMin, Position boundsMax) {
+        this(key, null, boundsMin, boundsMax);
+    }
+    
     public ItemGenerator(Key id, Collection<ItemEntry> itemEntries, Position boundsMin, Position boundsMax) {
         this.key = id;
         
-        for (ItemEntry itemEntry : itemEntries) {
-            this.entries.put(itemEntry.getKey(), itemEntry);
+        if (itemEntries != null) {
+            for (ItemEntry itemEntry : itemEntries) {
+                this.entries.put(itemEntry.getKey(), itemEntry);
+            }
         }
         
         this.initProperty = new BooleanProperty(this, "init", false);
+        
+        this.stopwatch = StarGenerators.getClockManager().createStopwatch(0, 0);
         
         this.entries.addListener(c -> {
             ItemEntry itemEntry = c.added();
@@ -101,6 +105,7 @@ public class ItemGenerator implements Generator<ItemEntry> {
             }
         });
         
+        
         this.boundsMin = boundsMin;
         this.boundsMax = boundsMax;
     }
@@ -110,7 +115,6 @@ public class ItemGenerator implements Generator<ItemEntry> {
         this.world = world;
         this.initProperty.set(true);
         this.region = new Cuboid(new Location(world, this.boundsMin.getBlockX(), this.boundsMin.getBlockY(), this.boundsMin.getBlockZ()), new Location(world, this.boundsMax.getBlockX(), this.boundsMax.getBlockY(), this.boundsMax.getBlockZ()));
-        this.stopwatch = this.clockManager.createStopwatch(0, 0);
     }
     
     public Stopwatch getStopwatch() {
@@ -201,10 +205,6 @@ public class ItemGenerator implements Generator<ItemEntry> {
     
     public Position getBoundsMax() {
         return boundsMax;
-    }
-    
-    public ClockManager getClockManager() {
-        return clockManager;
     }
     
     public boolean isInitialized() {

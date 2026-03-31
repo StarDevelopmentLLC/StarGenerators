@@ -1,22 +1,24 @@
 package com.stardevllc.stargenerators.command;
 
-import com.stardevllc.itembuilder.common.ItemBuilder;
-import com.stardevllc.smaterial.SMaterial;
-import com.stardevllc.stargenerators.model.*;
-import com.stardevllc.stargenerators.model.ItemEntry.Flag;
-import com.stardevllc.staritems.ItemBuilders;
-import com.stardevllc.starlib.objects.key.Key;
-import com.stardevllc.starlib.objects.key.Keys;
-import com.stardevllc.starlib.objects.key.impl.StringKey;
-import com.stardevllc.starlib.time.TimeFormat;
-import com.stardevllc.starlib.time.TimeParser;
 import com.stardevllc.Position;
 import com.stardevllc.colors.StarColorsV2;
 import com.stardevllc.command.flags.CmdFlags;
 import com.stardevllc.command.flags.FlagResult;
 import com.stardevllc.command.flags.type.PresenceFlag;
 import com.stardevllc.command.params.*;
+import com.stardevllc.itembuilder.common.ItemBuilder;
 import com.stardevllc.plugin.ExtendedJavaPlugin;
+import com.stardevllc.registry.PluginKey;
+import com.stardevllc.smaterial.SMaterial;
+import com.stardevllc.stargenerators.model.ItemEntry;
+import com.stardevllc.stargenerators.model.ItemEntry.Flag;
+import com.stardevllc.stargenerators.model.ItemGenerator;
+import com.stardevllc.staritems.ItemBuilders;
+import com.stardevllc.starlib.objects.key.Key;
+import com.stardevllc.starlib.objects.key.Keys;
+import com.stardevllc.starlib.objects.key.impl.StringKey;
+import com.stardevllc.starlib.time.TimeFormat;
+import com.stardevllc.starlib.time.TimeParser;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.command.*;
@@ -27,11 +29,13 @@ import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.*;
 
+import static com.stardevllc.stargenerators.StarGenerators.ITEM_GENERATORS;
+
 public class ItemGeneratorCommand implements CommandExecutor, Listener {
     
-    private ExtendedJavaPlugin plugin;
+    private static final TimeFormat TIME_FORMAT = new TimeFormat("%*##y%%*##mo%%*##d%%*##h%%*##m%%*##s%%*##t%%*##ms%");
     
-    private GeneratorRegistry registry;
+    private ExtendedJavaPlugin plugin;
     
     /**
      * The generator selections based on each player <br>
@@ -57,20 +61,21 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
     
     private static final class Params {
         private static final class Item {
-            private static final Param<String> ID = new Param<>("id", "ID", String.class, "");
-            private static final Param<String> MATERIAL = new Param<>("material", "Material", String.class, SMaterial.AIR.name());
-            private static final Param<String> COOLDOWN = new Param<>("cooldown", "Cooldown", String.class, "1ms");
-            private static final Param<Boolean> INVULNERABLE = new Param<>("invulnerable", "Invulnerable", Boolean.class, true);
-            private static final Param<Boolean> INVENTORY_PICKUP = new Param<>("ip", "Inventory Pickup", Boolean.class, false);
-            private static final Param<Boolean> PERSISTENT = new Param<>("persistent", "Persistent", Boolean.class, true);
-            private static final Param<Integer> MAX_COUNT = new Param<>("maxitems", "Max Items", Integer.class, Integer.MAX_VALUE);
-            public static final Param<Integer> STACK_SIZE = new Param<>("ss", "Stack Size", Integer.class, 1);
+            private static final Param<String> ID = Param.builder(String.class).id("id").name("ID").defaultValue("").build();
+            private static final Param<String> MATERIAL = Param.builder(String.class).id("mat").name("Material").defaultValue(SMaterial.AIR.name()).build();
+            private static final Param<String> COOLDOWN = Param.builder(String.class).id("cd").name("Cooldown").defaultValue("1ms").build();
+            private static final Param<Boolean> INVULNERABLE = Param.builder(Boolean.class).id("iv").name("Invulnerable").defaultValue(true).build();
+            private static final Param<Boolean> INVENTORY_PICKUP = Param.builder(Boolean.class).id("ip").name("Inventory Pickup").defaultValue(false).build();
+            private static final Param<Boolean> PERSISTENT = Param.builder(Boolean.class).id("pst").name("Persistent").defaultValue(true).build();
+            private static final Param<Integer> MAX_COUNT = Param.builder(Integer.class).id("mi").name("Max Items").defaultValue(64).build();
+            private static final Param<Integer> STACK_SIZE = Param.builder(Integer.class).id("ss").name("Stack Size").defaultValue(1).build();
+            
+            private static final List<Param<?>> REQUIRED = List.of(MATERIAL);
         }
     }
     
-    public ItemGeneratorCommand(ExtendedJavaPlugin plugin, GeneratorRegistry registry) {
+    public ItemGeneratorCommand(ExtendedJavaPlugin plugin) {
         this.plugin = plugin;
-        this.registry = registry;
         Bukkit.getServer().getPluginManager().registerEvents(this, plugin);
         
         this.cmdFlags = new CmdFlags(Flags.DEBUG, Flags.Create.SELECT, Flags.Create.INIT, Flags.Create.START);
@@ -82,11 +87,6 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
         StarColorsV2 colors = plugin.getColors();
         if (!sender.hasPermission("staritemgenerators.command.itemgenerators")) {
             colors.coloredLegacy(sender, "You do not have permission to perform that command.");
-            return true;
-        }
-        
-        if (registry == null) {
-            colors.coloredLegacy(sender, "&4The Registry for Item Generators is not present for the command logic. This is a bug");
             return true;
         }
         
@@ -129,9 +129,9 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
                 return true;
             }
             
-            Key id = Keys.of(args[1]);
+            Key id = PluginKey.of(this.plugin, args[1]);
             
-            if (this.registry.containsKey(id)) {
+            if (ITEM_GENERATORS.containsKey(id)) {
                 colors.coloredLegacy(sender, "&cA generator with that name already exists.");
                 return true;
             }
@@ -157,8 +157,8 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
             
             ItemGenerator itemGenerator = new ItemGenerator(id, new ArrayList<>(), pos1, pos2);
             
-            registry.register(itemGenerator.getKey(), itemGenerator);
-            if (!registry.containsKey(itemGenerator.getKey())) {
+            ITEM_GENERATORS.register(itemGenerator.getKey(), itemGenerator);
+            if (!ITEM_GENERATORS.containsKey(itemGenerator.getKey())) {
                 colors.coloredLegacy(sender, "&cFailed to register the new item generator");
                 return true;
             }
@@ -187,9 +187,30 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
                 return true;
             }
             
-            ItemGenerator generator = registry.get(args[1]);
+            String genName = args[1].toLowerCase();
+            ItemGenerator generator = ITEM_GENERATORS.get(genName);
+            
+            List<ItemGenerator> gens = new ArrayList<>();
             if (generator == null) {
-                colors.coloredLegacy(sender, "&cAn Item Generator with the id " + args[1] + " does not exist.");
+                for (ItemGenerator itemGenerator : ITEM_GENERATORS) {
+                    if (itemGenerator.getKey().contains(genName)) {
+                        gens.add(itemGenerator);
+                    }
+                }
+            }
+            
+            if (gens.size() == 1) {
+                generator = gens.getFirst();
+            } else if (gens.size() > 1) {
+                colors.coloredLegacy(sender, "&cMultiple Generators match the partial name: \"" + genName + "\"");
+                for (ItemGenerator gen : gens) {
+                    colors.coloredLegacy(sender, " &8- &c" + gen.getKey());
+                }
+                return true;
+            }
+            
+            if (generator == null) {
+                colors.coloredLegacy(sender, "&cAn Item Generator with the id " + genName + " does not exist.");
                 return true;
             }
             
@@ -209,7 +230,7 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
                 return true;
             }
             
-            ItemGenerator generator = registry.get(genId);
+            ItemGenerator generator = ITEM_GENERATORS.get(genId);
             if (generator == null) {
                 colors.coloredLegacy(sender, "&cThe id " + genId + " does not match a valid generator.");
                 return true;
@@ -254,9 +275,9 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
             return true;
         }
         
-        ItemGenerator generator = registry.get(genId);
+        ItemGenerator generator = ITEM_GENERATORS.get(genId);
         if (generator == null) {
-            colors.coloredLegacy(sender, "&cThe id " + genId + " does not match a valid generator."); 
+            colors.coloredLegacy(sender, "&cThe id " + genId + " does not match a valid generator.");
             return true;
         }
         
@@ -287,8 +308,44 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
         } else if (args[0].equalsIgnoreCase("additem")) {
             if (!(args.length > 1)) {
                 colors.coloredLegacy(sender, "&cUsage: /" + label + " " + args[0] + " <params>");
-                List<String> paramsList = List.of(Params.Item.ID.id(), Params.Item.MATERIAL.id(), Params.Item.COOLDOWN.id(), Params.Item.INVULNERABLE.id(), Params.Item.INVENTORY_PICKUP.id(), Params.Item.PERSISTENT.id(), Params.Item.MAX_COUNT.id(), Params.Item.STACK_SIZE.id());
-                colors.coloredLegacy(sender, "  &cParams: " + String.join(", ", paramsList));
+                List<Param<?>> paramsList = List.of(Params.Item.ID, Params.Item.MATERIAL, Params.Item.COOLDOWN, Params.Item.INVULNERABLE, Params.Item.INVENTORY_PICKUP, Params.Item.PERSISTENT, Params.Item.MAX_COUNT, Params.Item.STACK_SIZE);
+                
+                List<Param<?>> requiredParams = new LinkedList<>(), optionalParams = new LinkedList<>();
+                for (Param<?> param : paramsList) {
+                    if (Params.Item.REQUIRED.contains(param)) {
+                        requiredParams.add(param);
+                    } else {
+                        optionalParams.add(param);
+                    }
+                }
+                
+                if (!requiredParams.isEmpty()) {
+                    colors.coloredLegacy(sender, "  &cRequired Parameters:");
+                    for (Param<?> requiredParam : requiredParams) {
+                        String aliases;
+                        if (requiredParam.aliases() != null) {
+                            aliases = ", aliases=" + String.join(", ", requiredParam.aliases());
+                        } else {
+                            aliases = "";
+                        }
+                        colors.coloredLegacy(sender, "    &8- &c" + requiredParam.id() + "(name=" + requiredParam.name() + aliases + ")");
+                    }
+                }
+                
+                if (!optionalParams.isEmpty()) {
+                    colors.coloredLegacy(sender, "  &eOptional Parameters: ");
+                    for (Param<?> optionalParam : optionalParams) {
+                        String aliases;
+                        if (optionalParam.aliases() != null) {
+                            aliases = ", aliases=" + String.join(", ", optionalParam.aliases());
+                        } else {
+                            aliases = "";
+                        }
+                        
+                        colors.coloredLegacy(sender, "    &8- &e" + optionalParam.id() + " (name=" + optionalParam.name() + ", default=\"" + optionalParam.defaultValue() + "\"" + aliases + ")");
+                    }
+                }
+                
                 return true;
             }
             
@@ -304,7 +361,6 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
             
             
             ParamResult paramResults = this.cmdParams.parse(args);
-            args = paramResults.args();
             
             Optional<SMaterial> matOpt = SMaterial.matchSMaterial(paramResults.getValue(Params.Item.MATERIAL));
             if (matOpt.isEmpty()) {
@@ -321,9 +377,6 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
             
             ItemBuilder<?, ?> itemBuilder = ItemBuilders.of(material);
             
-            int stackSize = paramResults.getValue(Params.Item.STACK_SIZE);
-            itemBuilder.amount(stackSize);
-            
             String id = paramResults.getValue(Params.Item.ID);
             
             if (id == null || id.isBlank()) {
@@ -335,30 +388,10 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
                 return true;
             }
             
-            long cooldown = TimeParser.parseTime(paramResults.getValue(Params.Item.COOLDOWN));
-            
-            int maxItems = paramResults.getValue(Params.Item.MAX_COUNT);
-            if (maxItems <= 0) {
-                colors.coloredLegacy(sender, "&cInvalid number provided: " + args[3]);
-                return true;
-            }
-            
-            List<Flag> flags = new ArrayList<>();
-            
-            if (paramResults.getValue(Params.Item.PERSISTENT)) {
-                flags.add(Flag.PERSISTENT);
-            }
-            
-            if (paramResults.getValue(Params.Item.INVULNERABLE)) {
-                flags.add(Flag.INVULNERABLE);
-            }
-            
-            if (paramResults.getValue(Params.Item.INVENTORY_PICKUP)) {
-                flags.add(Flag.INVENTORY_PICKUP);
-            }
-            
-            ItemEntry itemEntry = new ItemEntry(id, itemBuilder, cooldown, maxItems, new Position(location.getBlockX(), location.getBlockY(), location.getBlockZ()), flags);
+            ItemEntry itemEntry = new ItemEntry(PluginKey.of(plugin, id), itemBuilder);
             generator.addEntry(itemEntry);
+            
+            setItemEntryValues(itemEntry, paramResults, colors, player);
             
             if (flagResults.isPresent(Flags.DEBUG)) {
                 itemEntry.addPickupListener((entity, item, entry, gen) -> colors.coloredLegacy(sender, "&8Picked up " + entry.getKey()));
@@ -368,20 +401,50 @@ public class ItemGeneratorCommand implements CommandExecutor, Listener {
             List<String> msgLines = new LinkedList<>();
             msgLines.add("&eYou added the item &b" + itemEntry.getKey() + " &eto the generator &b" + generator.getKey());
             
+            int maxItems = paramResults.getValue(Params.Item.MAX_COUNT);
             if (maxItems == Integer.MAX_VALUE) {
                 msgLines.add("  &eMax Items: &bInfinite");
             } else {
                 msgLines.add("  &eMax Items: &b" + maxItems);
             }
             
+            msgLines.add("  &eCooldown: &b" + TIME_FORMAT.format(itemEntry.getCooldown()));
             msgLines.add("  &ePersistent: &b" + formatBoolean(itemEntry.hasFlag(Flag.PERSISTENT)));
             msgLines.add("  &eInventory Pickup: &b" + formatBoolean(itemEntry.hasFlag(Flag.INVENTORY_PICKUP)));
             msgLines.add("  &eInvulnerable: &b" + formatBoolean(itemEntry.hasFlag(Flag.INVULNERABLE)));
             
             msgLines.forEach(line -> colors.coloredLegacy(sender, line));
-        } 
+        }
         
         return true;
+    }
+    
+    private static void setItemEntryValues(ItemEntry entry, ParamResult paramResults, StarColorsV2 colors, Player sender) {
+        int stackSize = paramResults.getValue(Params.Item.STACK_SIZE);
+        entry.getBuilder().amount(stackSize);
+        
+        long cooldown = TimeParser.parseTime(paramResults.getValue(Params.Item.COOLDOWN));
+        
+        int maxItems = paramResults.getValue(Params.Item.MAX_COUNT);
+        if (maxItems <= 0) {
+            colors.coloredLegacy(sender, "&cInvalid number provided for max count");
+            return;
+        }
+        
+        Location location = sender.getLocation();
+        entry.setSpawnPosition(new Position(location.getBlockX(), location.getBlockY(), location.getBlockZ()));
+        
+        if (paramResults.getValue(Params.Item.PERSISTENT)) {
+            entry.addFlag(Flag.PERSISTENT);
+        }
+        
+        if (paramResults.getValue(Params.Item.INVULNERABLE)) {
+            entry.addFlag(Flag.INVULNERABLE);
+        }
+        
+        if (paramResults.getValue(Params.Item.INVENTORY_PICKUP)) {
+            entry.addFlag(Flag.INVENTORY_PICKUP);
+        }
     }
     
     private static String formatBoolean(boolean v) {

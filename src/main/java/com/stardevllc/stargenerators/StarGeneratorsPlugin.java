@@ -14,8 +14,8 @@ public class StarGeneratorsPlugin extends ExtendedJavaPlugin implements Listener
         
         StarGenerators.init(this);
         
-        registerCommand("itemgenerator", new ItemGeneratorCommand(this, StarGenerators.getGeneratorRegistry()));
-        registerListeners(this, new GeneratorListener(StarGenerators.getGeneratorRegistry()));
+        registerCommand("itemgenerator", new ItemGeneratorCommand(this));
+        registerListeners(this, new GeneratorListener());
     }
     
     @EventHandler 

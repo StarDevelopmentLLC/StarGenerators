@@ -1,5 +1,6 @@
 package com.stardevllc.stargenerators.listener;
 
+import com.stardevllc.stargenerators.StarGenerators;
 import com.stardevllc.stargenerators.model.*;
 import com.stardevllc.stargenerators.model.ItemEntry.Flag;
 import org.bukkit.entity.Item;
@@ -9,15 +10,9 @@ import org.bukkit.event.inventory.InventoryPickupItemEvent;
 
 public class GeneratorListener implements Listener {
     
-    private GeneratorRegistry registry;
-    
-    public GeneratorListener(GeneratorRegistry registry) {
-        this.registry = registry;
-    }
-    
     @EventHandler
     public void onItemMerge(ItemMergeEvent e) {
-        for (ItemGenerator generator : registry.values()) {
+        for (ItemGenerator generator : StarGenerators.ITEM_GENERATORS.values()) {
             for (SpawnedItem item : generator.getSpawnedItems()) {
                 if (e.getEntity().equals(item.item())) {
                     e.setCancelled(true);
@@ -42,7 +37,7 @@ public class GeneratorListener implements Listener {
     }
     
     private void handleItemEvent(Item itemEntity, Flag flag, Cancellable e) {
-        for (ItemGenerator generator : registry.values()) {
+        for (ItemGenerator generator : StarGenerators.ITEM_GENERATORS.values()) {
             for (SpawnedItem spawnedItem : generator.getSpawnedItems()) {
                 if (spawnedItem.item().equals(itemEntity)) {
                     if (spawnedItem.entry().hasFlag(flag)) {

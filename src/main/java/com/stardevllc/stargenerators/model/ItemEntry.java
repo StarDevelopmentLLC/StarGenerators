@@ -37,12 +37,12 @@ public class ItemEntry implements GeneratorEntry {
     /**
      * A unique identifier for the item entry. This is per generator
      */
-    protected Key key;
+    protected final Key key;
     
     /**
      * The builder used to create items
      */
-    protected ItemBuilder<?, ?> builder;
+    protected final ItemBuilder<?, ?> builder;
     
     /**
      * The cooldown in milliseconds before the next item spawns
@@ -66,6 +66,11 @@ public class ItemEntry implements GeneratorEntry {
     
     private final List<ItemPickupListener> itemPickupListeners = new ArrayList<>();
     private final List<ItemSpawnListener> itemSpawnListeners = new ArrayList<>();
+    
+    public ItemEntry(Key key, ItemBuilder<?, ?> builder) {
+        this.key = key;
+        this.builder = builder;
+    }
     
     public ItemEntry(String key, ItemBuilder<?, ?> builder, long cooldown, int maxItems, Position spawnPosition, Flag... flags) {
         this.key = new StringKey(key);
@@ -160,11 +165,19 @@ public class ItemEntry implements GeneratorEntry {
         return spawnPosition;
     }
     
+    public void setSpawnPosition(Position spawnPosition) {
+        this.spawnPosition = spawnPosition;
+    }
+    
     public Set<Flag> getFlags() {
         return EnumSet.copyOf(this.flags);
     }
     
     public boolean hasFlag(Flag flag) {
         return this.flags.contains(flag);
+    }
+    
+    public void addFlag(Flag flag) {
+        this.flags.add(flag);
     }
 }
