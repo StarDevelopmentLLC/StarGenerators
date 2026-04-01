@@ -1,7 +1,7 @@
 package com.stardevllc.stargenerators;
 
 import com.stardevllc.plugin.ExtendedJavaPlugin;
-import com.stardevllc.stargenerators.command.ItemGeneratorCommand;
+import com.stardevllc.stargenerators.command.ItemGeneratorCommandOld;
 import com.stardevllc.stargenerators.listener.GeneratorListener;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -14,7 +14,7 @@ public class StarGeneratorsPlugin extends ExtendedJavaPlugin implements Listener
         
         StarGenerators.init(this);
         
-        registerCommand("itemgenerator", new ItemGeneratorCommand(this));
+        registerCommand("itemgenerator", new ItemGeneratorCommandOld(this));
         registerListeners(this, new GeneratorListener());
     }
     

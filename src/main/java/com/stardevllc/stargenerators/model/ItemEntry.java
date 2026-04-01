@@ -3,11 +3,14 @@ package com.stardevllc.stargenerators.model;
 import com.stardevllc.itembuilder.common.ItemBuilder;
 import com.stardevllc.starlib.objects.key.Key;
 import com.stardevllc.starlib.objects.key.impl.StringKey;
+import de.tr7zw.nbtapi.NBT;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
 
 public class ItemEntry implements GeneratorEntry {
+    
+    public static final String NBT_KEY = "itementrykey";
     
     public enum Flag {
         /**
@@ -23,7 +26,12 @@ public class ItemEntry implements GeneratorEntry {
         /**
          * Controls if the item can be picked up by inventories
          */
-        INVENTORY_PICKUP
+        INVENTORY_PICKUP,
+        
+        /**
+         * Controls if the data put on the item in world is kept when being picked up
+         */
+        KEEP_DATA
     }
     
     /**
@@ -79,7 +87,11 @@ public class ItemEntry implements GeneratorEntry {
     }
     
     public ItemStack createItemStack() {
-        return builder.build();
+        ItemStack itemStack = builder.build();
+        NBT.modify(itemStack, nbt -> {
+            nbt.setString(NBT_KEY, getKey().toString());
+        });
+        return itemStack;
     }
     
     public int getMaxItems() {

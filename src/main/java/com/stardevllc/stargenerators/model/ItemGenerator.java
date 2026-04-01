@@ -2,13 +2,16 @@ package com.stardevllc.stargenerators.model;
 
 import com.stardevllc.Cuboid;
 import com.stardevllc.Position;
+import com.stardevllc.itembuilder.common.ItemBuilder;
 import com.stardevllc.stargenerators.StarGenerators;
 import com.stardevllc.stargenerators.model.listener.ItemPickupListener;
 import com.stardevllc.stargenerators.model.listener.ItemSpawnListener;
+import com.stardevllc.staritems.ItemBuilders;
 import com.stardevllc.starlib.clock.callback.CallbackPeriod;
 import com.stardevllc.starlib.clock.clocks.Stopwatch;
 import com.stardevllc.starlib.objects.key.Key;
 import com.stardevllc.starlib.values.property.BooleanProperty;
+import de.tr7zw.nbtapi.NBT;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Item;
@@ -19,6 +22,9 @@ import org.bukkit.util.Vector;
 import java.util.*;
 
 public class ItemGenerator implements Generator<ItemEntry> {
+    
+    public static final String NBT_KEY = "itemgeneratorkey";
+    
     /**
      * A unique identifier for the generator itself <br>
      * It is best to auto-generate this id and have the entry ids be readable
@@ -136,17 +142,18 @@ public class ItemGenerator implements Generator<ItemEntry> {
         int currentItemCount = getSpawnedItemsCount(holder.itemEntry.getKey());
         Location location = holder.position.toBlockLocation(world).add(0.5, 0, 0.5);
         
-        for (int i = 0; i < holder.itemEntry.getBuilder().getAmount(); i++) {
-            if (currentItemCount < holder.itemEntry.getMaxItems()) {
-                ItemStack itemStack = holder.itemEntry.createItemStack();
-                int amount = itemStack.getAmount();
-                itemStack.setAmount(1);
-                Item item = world.dropItem(location, itemStack);
-                item.setVelocity(new Vector());
-                SpawnedItem spawnedItem = this.addSpawnedItem(holder.itemEntry.getKey(), item);
-                holder.spawnListeners.forEach(l -> l.onSpawn(spawnedItem));
-                currentItemCount++;
-            }
+        ItemStack itemStack = holder.itemEntry.createItemStack();
+        NBT.modify(itemStack, nbt -> {
+            nbt.setString(NBT_KEY, getKey().toString());
+        });
+        itemStack.setAmount(1);
+        
+        for (int i = 0; i < holder.itemEntry.getBuilder().getAmount() && currentItemCount < holder.itemEntry.getMaxItems(); i++) {
+            Item item = world.dropItem(location, itemStack);
+            item.setVelocity(new Vector());
+            SpawnedItem spawnedItem = this.addSpawnedItem(holder.itemEntry.getKey(), item);
+            holder.spawnListeners.forEach(l -> l.onSpawn(spawnedItem));
+            currentItemCount++;
         }
     }
     
@@ -159,6 +166,12 @@ public class ItemGenerator implements Generator<ItemEntry> {
                 }
                 
                 holder.pickupListeners.forEach(l -> l.onPickup(entity, spawnedItem));
+                
+                if (!spawnedItem.entry().hasFlag(ItemEntry.Flag.KEEP_DATA)) {
+                    ItemBuilder<?, ?> itemBuilder = ItemBuilders.of(item.getItemStack());
+                    itemBuilder.clearCustomNBT();
+                    item.setItemStack(itemBuilder.build());
+                }
             }
         }
     }
@@ -257,6 +270,17 @@ public class ItemGenerator implements Generator<ItemEntry> {
     
     public Set<SpawnedItem> getSpawnedItems() {
         return new HashSet<>(spawnedItems);
+    }
+    
+    public Set<SpawnedItem> getSpawnedItems(Key itemKey) {
+        Set<SpawnedItem> spawnedItems = new HashSet<>();
+        for (SpawnedItem spawnedItem : this.spawnedItems) {
+            if (spawnedItem.entry().getKey().equals(itemKey)) {
+                spawnedItems.add(spawnedItem);
+            }
+        }
+        
+        return spawnedItems;
     }
     
     public SpawnedItem addSpawnedItem(Key entryId, Item item) {
