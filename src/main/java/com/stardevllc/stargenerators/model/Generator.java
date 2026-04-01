@@ -25,8 +25,6 @@ public interface Generator<E extends GeneratorEntry> extends Nameable, Keyable {
     
     void stop();
     
-    void addEntry(E entry);
-    
     E getEntry(Key key);
     
     Collection<E> getEntries();

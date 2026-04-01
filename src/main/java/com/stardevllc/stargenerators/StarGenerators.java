@@ -3,15 +3,13 @@ package com.stardevllc.stargenerators;
 import com.stardevllc.stargenerators.model.*;
 import com.stardevllc.starlib.clock.ClockManager;
 import com.stardevllc.starlib.objects.key.Keys;
+import com.stardevllc.starlib.registry.HashRegistry;
 import com.stardevllc.starlib.registry.IRegistry;
-import com.stardevllc.starlib.registry.Registries;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
-
-import java.util.HashMap;
 
 public final class StarGenerators {
     private StarGenerators() {
@@ -20,16 +18,19 @@ public final class StarGenerators {
     private static JavaPlugin plugin;
     
     @SuppressWarnings("rawtypes")
-    public static final IRegistry<Generator> REGISTRY = Registries.create(Generator.class)
-            .withSupplier(HashMap::new)
+    public static final IRegistry<Generator> REGISTRY = HashRegistry.builder(Generator.class)
             .withId(Keys.of("stargenerators:generators"))
             .asGlobal()
             .build();
     
-    public static final IRegistry<ItemGenerator> ITEM_GENERATORS = Registries.create(ItemGenerator.class)
-            .withSupplier(HashMap::new)
+    public static final IRegistry<ItemGenerator> ITEM_GENERATORS = HashRegistry.builder(ItemGenerator.class)
             .withId(Keys.of("stargenerators:item_generators"))
             .withParent(REGISTRY)
+            .asGlobal()
+            .build();
+    
+    public static final IRegistry<ItemEntry> ITEMS = HashRegistry.builder(ItemEntry.class)
+            .withId(Keys.of("stargenerators:items"))
             .asGlobal()
             .build();
     
@@ -60,12 +61,7 @@ public final class StarGenerators {
     
     public static boolean handleItemPickup(LivingEntity entity, Item item, int remaining) {
         for (ItemGenerator entry : ITEM_GENERATORS.values()) {
-            for (SpawnedItem spawnedItem : entry.getSpawnedItems()) {
-                if (item.equals(spawnedItem.item())) {
-                    spawnedItem.entry().handleItemPickup(entity, item, spawnedItem.entry(), entry);
-                }
-            }
-            
+            entry.handleItemPickup(entity, item);
             entry.removedSpawnedItem(item);
         }
         

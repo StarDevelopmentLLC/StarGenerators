@@ -1,17 +1,9 @@
 package com.stardevllc.stargenerators.model;
 
-import com.stardevllc.Position;
 import com.stardevllc.itembuilder.common.ItemBuilder;
-import com.stardevllc.stargenerators.model.listener.ItemPickupListener;
-import com.stardevllc.stargenerators.model.listener.ItemSpawnListener;
 import com.stardevllc.starlib.objects.key.Key;
 import com.stardevllc.starlib.objects.key.impl.StringKey;
-import org.bukkit.Location;
-import org.bukkit.World;
-import org.bukkit.entity.Item;
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.util.Vector;
 
 import java.util.*;
 
@@ -45,89 +37,36 @@ public class ItemEntry implements GeneratorEntry {
     protected final ItemBuilder<?, ?> builder;
     
     /**
-     * The cooldown in milliseconds before the next item spawns
-     */
-    protected long cooldown;
-    
-    /**
      * The max amount of items that can be within the generator bounds
      */
     protected int maxItems;
-    
-    /**
-     * The base spawn position for the items
-     */
-    protected Position spawnPosition;
     
     /**
      * The boolean based flags for the entry
      */
     protected final Set<Flag> flags = EnumSet.noneOf(Flag.class);
     
-    private final List<ItemPickupListener> itemPickupListeners = new ArrayList<>();
-    private final List<ItemSpawnListener> itemSpawnListeners = new ArrayList<>();
-    
     public ItemEntry(Key key, ItemBuilder<?, ?> builder) {
         this.key = key;
         this.builder = builder;
     }
     
-    public ItemEntry(String key, ItemBuilder<?, ?> builder, long cooldown, int maxItems, Position spawnPosition, Flag... flags) {
+    public ItemEntry(String key, ItemBuilder<?, ?> builder, int maxItems, Flag... flags) {
         this.key = new StringKey(key);
         this.builder = builder;
-        this.cooldown = cooldown;
         this.maxItems = maxItems;
-        this.spawnPosition = spawnPosition;
         if (flags != null) {
             this.flags.addAll(List.of(flags));
         }
     }
     
-    public ItemEntry(String key, ItemBuilder<?, ?> builder, long cooldown, int maxItems, Position spawnPosition, List<Flag> flags) {
+    public ItemEntry(String key, ItemBuilder<?, ?> builder, int maxItems, List<Flag> flags) {
         this.key = new StringKey(key);
         this.builder = builder;
-        this.cooldown = cooldown;
         this.maxItems = maxItems;
-        this.spawnPosition = spawnPosition;
         if (flags != null) {
             this.flags.addAll(flags);
         }
-    }
-    
-    public void addSpawnListener(ItemSpawnListener listener) {
-        this.itemSpawnListeners.add(listener);
-    }
-    
-    public void handleItemSpawn(Item item, ItemEntry itemEntry, ItemGenerator generator) {
-        for (ItemSpawnListener listener : this.itemSpawnListeners) {
-            listener.onSpawn(item, itemEntry, generator);
-        }
-    }
-    
-    public void addPickupListener(ItemPickupListener listener) {
-        this.itemPickupListeners.add(listener);
-    }
-    
-    public void handleItemPickup(LivingEntity entity, Item item, ItemEntry itemEntry, ItemGenerator generator) {
-        for (ItemPickupListener listener : this.itemPickupListeners) {
-            listener.onPickup(entity, item, itemEntry, generator);
-        }
-    }
-    
-    public List<Item> spawn(World world, ItemGenerator generator) {
-        Location location = spawnPosition.toBlockLocation(world).add(0.5, 0, 0.5);
-        ItemStack itemStack = createItemStack();
-        int amount = itemStack.getAmount();
-        itemStack.setAmount(1);
-        List<Item> items = new ArrayList<>();
-        for (int i = 0; i < amount; i++) {
-            Item item = world.dropItem(location, itemStack);
-            item.setVelocity(new Vector());
-            handleItemSpawn(item, this, generator);
-            items.add(item);
-        }
-        
-        return items;
     }
     
     @Override
@@ -143,30 +82,12 @@ public class ItemEntry implements GeneratorEntry {
         return builder.build();
     }
     
-    @Override
-    public long getCooldown() {
-        return cooldown;
-    }
-    
     public int getMaxItems() {
         return maxItems;
     }
     
-    @Override
-    public void setCooldown(long cooldown) {
-        this.cooldown = cooldown;
-    }
-    
     public void setMaxItems(int maxItems) {
         this.maxItems = maxItems;
-    }
-    
-    public Position getSpawnPosition() {
-        return spawnPosition;
-    }
-    
-    public void setSpawnPosition(Position spawnPosition) {
-        this.spawnPosition = spawnPosition;
     }
     
     public Set<Flag> getFlags() {

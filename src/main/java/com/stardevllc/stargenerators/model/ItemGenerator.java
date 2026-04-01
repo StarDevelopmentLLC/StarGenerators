@@ -3,15 +3,18 @@ package com.stardevllc.stargenerators.model;
 import com.stardevllc.Cuboid;
 import com.stardevllc.Position;
 import com.stardevllc.stargenerators.StarGenerators;
+import com.stardevllc.stargenerators.model.listener.ItemPickupListener;
+import com.stardevllc.stargenerators.model.listener.ItemSpawnListener;
 import com.stardevllc.starlib.clock.callback.CallbackPeriod;
 import com.stardevllc.starlib.clock.clocks.Stopwatch;
-import com.stardevllc.starlib.collections.observable.map.ObservableHashMap;
-import com.stardevllc.starlib.collections.observable.map.ObservableMap;
 import com.stardevllc.starlib.objects.key.Key;
 import com.stardevllc.starlib.values.property.BooleanProperty;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Item;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.util.Vector;
 
 import java.util.*;
 
@@ -24,9 +27,9 @@ public class ItemGenerator implements Generator<ItemEntry> {
     
     protected String name;
     
-    protected final ObservableMap<Key, ItemEntry> entries = new ObservableHashMap<>();
+    protected final Map<Key, ItemEntry> entries = new HashMap<>();
     
-    private final List<ItemEntryHolder> holders = new ArrayList<>();
+    private final Map<Key, ItemEntryHolder> holders = new HashMap<>();
     
     /**
      * The min and max positions for the generator. This is Bukkit World independent, useful for minigames
@@ -54,11 +57,16 @@ public class ItemGenerator implements Generator<ItemEntry> {
     private static final class ItemEntryHolder {
         private final ItemEntry itemEntry;
         private final CallbackPeriod period;
+        private Position position;
+        private long cooldown;
         private UUID callbackId;
+        
+        private final List<ItemPickupListener> pickupListeners = new ArrayList<>();
+        private final List<ItemSpawnListener> spawnListeners = new ArrayList<>();
         
         public ItemEntryHolder(ItemEntry e) {
             this.itemEntry = e;
-            this.period = itemEntry::getCooldown;
+            this.period = () -> cooldown;
         }
     }
     
@@ -79,33 +87,6 @@ public class ItemGenerator implements Generator<ItemEntry> {
         
         this.stopwatch = StarGenerators.getClockManager().createStopwatch(0, 0);
         
-        this.entries.addListener(c -> {
-            ItemEntry itemEntry = c.added();
-            if (itemEntry != null) {
-                ItemEntryHolder holder = new ItemEntryHolder(c.added());
-                this.holders.add(holder);
-                
-                holder.callbackId = this.stopwatch.addRepeatingCallback(snapshot -> {
-                    int currentItemCount = getSpawnedItemsCount(itemEntry.getKey());
-                    if (currentItemCount < itemEntry.getMaxItems()) {
-                        for (Item item : itemEntry.spawn(world, ItemGenerator.this)) {
-                            addSpawnedItem(itemEntry.getKey(), item);
-                        }
-                    }
-                }, holder.period);
-            } else if (c.removed() != null) {
-                Iterator<ItemEntryHolder> iterator = this.holders.iterator();
-                while (iterator.hasNext()) {
-                    ItemEntryHolder holder = iterator.next();
-                    if (holder.itemEntry.getKey().equals(c.removed().getKey())) {
-                        this.stopwatch.removeCallback(holder.callbackId);
-                    }
-                    iterator.remove();
-                }
-            }
-        });
-        
-        
         this.boundsMin = boundsMin;
         this.boundsMax = boundsMax;
     }
@@ -122,14 +103,13 @@ public class ItemGenerator implements Generator<ItemEntry> {
     }
     
     public long getNextSpawn(ItemEntry entry) {
-        for (ItemEntryHolder holder : this.holders) {
-            if (holder.itemEntry.getKey().equals(entry.getKey())) {
-                long nextRun = this.stopwatch.getNextRun(holder.callbackId);
-                return nextRun - this.stopwatch.getTime();
-            }
+        ItemEntryHolder holder = this.holders.get(entry.getKey());
+        if (holder == null) {
+            return 0;
         }
         
-        return 0;
+        long nextRun = this.stopwatch.getNextRun(holder.callbackId);
+        return nextRun - this.stopwatch.getTime();
     }
     
     @Override
@@ -142,14 +122,128 @@ public class ItemGenerator implements Generator<ItemEntry> {
         this.stopwatch.pause();
     }
     
-    @Override
-    public void addEntry(ItemEntry entry) {
+    public void addEntry(ItemEntry entry, Position position, long cooldown) {
+        ItemEntryHolder holder = new ItemEntryHolder(entry);
+        holder.position = position;
+        holder.cooldown = cooldown;
+        this.holders.put(entry.getKey(), holder);
+        
+        holder.callbackId = this.stopwatch.addRepeatingCallback(snapshot -> spawnItems(holder), holder.period);
         this.entries.put(entry.getKey(), entry);
+    }
+    
+    private void spawnItems(ItemEntryHolder holder) {
+        int currentItemCount = getSpawnedItemsCount(holder.itemEntry.getKey());
+        Location location = holder.position.toBlockLocation(world).add(0.5, 0, 0.5);
+        
+        for (int i = 0; i < holder.itemEntry.getBuilder().getAmount(); i++) {
+            if (currentItemCount < holder.itemEntry.getMaxItems()) {
+                ItemStack itemStack = holder.itemEntry.createItemStack();
+                int amount = itemStack.getAmount();
+                itemStack.setAmount(1);
+                Item item = world.dropItem(location, itemStack);
+                item.setVelocity(new Vector());
+                SpawnedItem spawnedItem = this.addSpawnedItem(holder.itemEntry.getKey(), item);
+                holder.spawnListeners.forEach(l -> l.onSpawn(spawnedItem));
+                currentItemCount++;
+            }
+        }
+    }
+    
+    public void handleItemPickup(LivingEntity entity, Item item) {
+        for (SpawnedItem spawnedItem : this.spawnedItems) {
+            if (spawnedItem.item().equals(item)) {
+                ItemEntryHolder holder = this.holders.get(spawnedItem.entry().getKey());
+                if (holder == null) {
+                    return;
+                }
+                
+                holder.pickupListeners.forEach(l -> l.onPickup(entity, spawnedItem));
+            }
+        }
     }
     
     @Override
     public ItemEntry getEntry(Key id) {
         return this.entries.get(id);
+    }
+    
+    public void addPickupListener(Key entryKey, ItemPickupListener listener) {
+        ItemEntryHolder holder = this.holders.get(entryKey);
+        if (holder != null) {
+            holder.pickupListeners.add(listener);
+        }
+    }
+    
+    public void addPickupListener(ItemEntry entry, ItemPickupListener listener) {
+        addPickupListener(entry.getKey(), listener);
+    }
+    
+    public void addSpawnListener(Key entryKey, ItemSpawnListener listener) {
+        ItemEntryHolder holder = this.holders.get(entryKey);
+        if (holder != null) {
+            holder.spawnListeners.add(listener);
+        }
+    }
+    
+    public void addSpawnListener(ItemEntry entry, ItemSpawnListener listener) {
+        addSpawnListener(entry.getKey(), listener);
+    }
+    
+    public Position getSpawnPosition(Key entryKey) {
+        ItemEntryHolder holder = this.holders.get(entryKey);
+        if (holder == null) {
+            return null;
+        }
+        
+        return holder.position;
+    }
+    
+    public Position getSpawnPosition(ItemEntry itemEntry) {
+        return getSpawnPosition(itemEntry.getKey());
+    }
+    
+    public void setSpawnPosition(Key entryKey, Position position) {
+        if (position == null) {
+            return;
+        }
+        
+        ItemEntryHolder holder = this.holders.get(entryKey);
+        if (holder == null) {
+            return;
+        }
+        
+        holder.position = position;
+    }
+    
+    public void setSpawnPosition(ItemEntry itemEntry, Position position) {
+        setSpawnPosition(itemEntry.getKey(), position);
+    }
+    
+    public long getEntryCooldown(Key entryKey) {
+        ItemEntryHolder holder = this.holders.get(entryKey);
+        if (holder == null) {
+            return 0;
+        }
+        
+        return holder.cooldown;
+    }
+    
+    public long getEntryCooldown(ItemEntry itemEntry) {
+        return getEntryCooldown(itemEntry.getKey());
+    }
+    
+    public void setEntryCooldown(Key entryKey, long cooldown) {
+        ItemEntryHolder holder = this.holders.get(entryKey);
+        if (holder == null) {
+            return;
+        }
+        
+        holder.cooldown = cooldown;
+    }
+    
+    public void setEntryCooldown(ItemEntry itemEntry, long cooldown) {
+        setEntryCooldown(itemEntry.getKey(), cooldown);
     }
     
     @Override
@@ -165,14 +259,15 @@ public class ItemGenerator implements Generator<ItemEntry> {
         return new HashSet<>(spawnedItems);
     }
     
-    public void addSpawnedItem(Key entryId, Item item) {
+    public SpawnedItem addSpawnedItem(Key entryId, Item item) {
         ItemEntry entry = getEntry(entryId);
         if (entry == null) {
-            return;
+            return null;
         }
         
         SpawnedItem spawnedItem = new SpawnedItem(item, this, entry);
         this.spawnedItems.add(spawnedItem);
+        return spawnedItem;
     }
     
     public void removedSpawnedItem(Item item) {

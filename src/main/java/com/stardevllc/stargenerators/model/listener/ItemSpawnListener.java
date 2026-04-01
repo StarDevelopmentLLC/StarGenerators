@@ -1,10 +1,8 @@
 package com.stardevllc.stargenerators.model.listener;
 
-import com.stardevllc.stargenerators.model.ItemEntry;
-import com.stardevllc.stargenerators.model.ItemGenerator;
-import org.bukkit.entity.Item;
+import com.stardevllc.stargenerators.model.SpawnedItem;
 
 @FunctionalInterface
 public interface ItemSpawnListener extends ItemEntryListener {
-    void onSpawn(Item item, ItemEntry entry, ItemGenerator generator);
+    void onSpawn(SpawnedItem item);
 }
