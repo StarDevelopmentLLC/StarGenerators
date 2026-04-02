@@ -66,6 +66,7 @@ public class ItemGenerator implements Generator<ItemEntry> {
         private Position position;
         private long cooldown;
         private int maxItems;
+        private int stackSize;
         private UUID callbackId;
         
         private final List<ItemPickupListener> pickupListeners = new ArrayList<>();
@@ -77,13 +78,12 @@ public class ItemGenerator implements Generator<ItemEntry> {
         }
     }
     
-    public ItemGenerator(Key key, Position boundsMin, Position boundsMax) {
-        this(key, null, boundsMin, boundsMax);
+    public ItemGenerator(String name, Position boundsMin, Position boundsMax) {
+        this(name, null, boundsMin, boundsMax);
     }
     
-    public ItemGenerator(Key id, Collection<ItemEntry> itemEntries, Position boundsMin, Position boundsMax) {
-        this.key = id;
-        
+    public ItemGenerator(String name, Collection<ItemEntry> itemEntries, Position boundsMin, Position boundsMax) {
+        this.name = name;
         if (itemEntries != null) {
             for (ItemEntry itemEntry : itemEntries) {
                 this.entries.put(itemEntry.getKey(), itemEntry);
@@ -129,11 +129,12 @@ public class ItemGenerator implements Generator<ItemEntry> {
         this.stopwatch.pause();
     }
     
-    public void addEntry(ItemEntry entry, Position position, long cooldown, int maxItems) {
+    public void addEntry(ItemEntry entry, Position position, long cooldown, int maxItems, int stackSize) {
         ItemEntryHolder holder = new ItemEntryHolder(entry);
         holder.position = position;
         holder.cooldown = cooldown;
         holder.maxItems = maxItems;
+        holder.stackSize = stackSize;
         this.holders.put(entry.getKey(), holder);
         
         holder.callbackId = this.stopwatch.addRepeatingCallback(snapshot -> spawnItems(holder), holder.period);
@@ -150,7 +151,7 @@ public class ItemGenerator implements Generator<ItemEntry> {
         });
         itemStack.setAmount(1);
         
-        for (int i = 0; i < holder.itemEntry.getBuilder().getAmount() && currentItemCount < holder.maxItems; i++) {
+        for (int i = 0; i < holder.stackSize && currentItemCount < holder.maxItems; i++) {
             Item item = world.dropItem(location, itemStack);
             item.setVelocity(new Vector());
             SpawnedItem spawnedItem = this.addSpawnedItem(holder.itemEntry.getKey(), item);
@@ -181,6 +182,29 @@ public class ItemGenerator implements Generator<ItemEntry> {
     @Override
     public ItemEntry getEntry(Key id) {
         return this.entries.get(id);
+    }
+    
+    public int getStackSize(Key entryKey) {
+        ItemEntryHolder holder = this.holders.get(entryKey);
+        if (holder != null) {
+            return holder.stackSize;
+        }
+        return 0;
+    }
+    
+    public int getStackSize(ItemEntry itemEntry) {
+        return getStackSize(itemEntry.getKey());
+    }
+    
+    public void setStackSize(Key entryKey, int stackSize) {
+        ItemEntryHolder holder = this.holders.get(entryKey);
+        if (holder != null) {
+            holder.stackSize = stackSize;
+        }
+    }
+    
+    public void setStackSize(ItemEntry itemEntry, int stackSize) {
+        setStackSize(itemEntry.getKey(), stackSize);
     }
     
     public int getMaxItems(Key entryKey) {
@@ -342,6 +366,11 @@ public class ItemGenerator implements Generator<ItemEntry> {
     @Override
     public Key getKey() {
         return key;
+    }
+    
+    @Override
+    public void setKey(Key key) {
+        this.key = key;
     }
     
     public Position getBoundsMin() {

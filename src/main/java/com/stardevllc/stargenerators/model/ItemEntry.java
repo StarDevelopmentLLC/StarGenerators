@@ -2,7 +2,6 @@ package com.stardevllc.stargenerators.model;
 
 import com.stardevllc.itembuilder.common.ItemBuilder;
 import com.stardevllc.starlib.objects.key.Key;
-import com.stardevllc.starlib.objects.key.impl.StringKey;
 import de.tr7zw.nbtapi.NBT;
 import org.bukkit.inventory.ItemStack;
 
@@ -37,7 +36,7 @@ public class ItemEntry implements GeneratorEntry {
     /**
      * A unique identifier for the item entry. This is per generator
      */
-    protected final Key key;
+    protected Key key;
     
     /**
      * The builder used to create items
@@ -49,30 +48,26 @@ public class ItemEntry implements GeneratorEntry {
      */
     protected final Set<Flag> flags = EnumSet.noneOf(Flag.class);
     
-    public ItemEntry(Key key, ItemBuilder<?, ?> builder) {
-        this.key = key;
-        this.builder = builder;
-    }
-    
-    public ItemEntry(String key, ItemBuilder<?, ?> builder, Flag... flags) {
-        this.key = new StringKey(key);
+    public ItemEntry(ItemBuilder<?, ?> builder, Flag... flags) {
         this.builder = builder;
         if (flags != null) {
             this.flags.addAll(List.of(flags));
         }
     }
     
-    public ItemEntry(String key, ItemBuilder<?, ?> builder, int maxItems, List<Flag> flags) {
-        this.key = new StringKey(key);
+    public ItemEntry(ItemBuilder<?, ?> builder, List<Flag> flags) {
         this.builder = builder;
-        if (flags != null) {
-            this.flags.addAll(flags);
-        }
+        this.flags.addAll(flags);
     }
     
     @Override
     public Key getKey() {
         return key;
+    }
+    
+    @Override
+    public void setKey(Key key) {
+        this.key = key;
     }
     
     public ItemBuilder<?, ?> getBuilder() {

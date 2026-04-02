@@ -21,17 +21,20 @@ public final class StarGenerators {
     public static final IRegistry<Generator> REGISTRY = HashRegistry.builder(Generator.class)
             .withId(Keys.of("stargenerators:generators"))
             .asGlobal()
+            .checkPartialInGet()
             .build();
     
     public static final IRegistry<ItemGenerator> ITEM_GENERATORS = HashRegistry.builder(ItemGenerator.class)
             .withId(Keys.of("stargenerators:item_generators"))
             .withParent(REGISTRY)
+            .checkPartialInGet()
             .asGlobal()
             .build();
     
     public static final IRegistry<ItemEntry> ITEMS = HashRegistry.builder(ItemEntry.class)
             .withId(Keys.of("stargenerators:items"))
             .asGlobal()
+            .checkPartialInGet()
             .build();
     
     private static ClockManager clockManager;

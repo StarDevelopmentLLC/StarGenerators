@@ -31,6 +31,14 @@ public interface Generator<E extends GeneratorEntry> extends Nameable, Keyable {
     
     boolean hasEntry(Key key);
     
+    @Override
+    void setKey(Key key);
+    
+    @Override
+    default boolean supportsSettingKey() {
+        return true;
+    }
+    
     default boolean contains(Location location) {
         if (location == null) {
             return false;
