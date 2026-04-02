@@ -65,6 +65,7 @@ public class ItemGenerator implements Generator<ItemEntry> {
         private final CallbackPeriod period;
         private Position position;
         private long cooldown;
+        private int maxItems;
         private UUID callbackId;
         
         private final List<ItemPickupListener> pickupListeners = new ArrayList<>();
@@ -128,10 +129,11 @@ public class ItemGenerator implements Generator<ItemEntry> {
         this.stopwatch.pause();
     }
     
-    public void addEntry(ItemEntry entry, Position position, long cooldown) {
+    public void addEntry(ItemEntry entry, Position position, long cooldown, int maxItems) {
         ItemEntryHolder holder = new ItemEntryHolder(entry);
         holder.position = position;
         holder.cooldown = cooldown;
+        holder.maxItems = maxItems;
         this.holders.put(entry.getKey(), holder);
         
         holder.callbackId = this.stopwatch.addRepeatingCallback(snapshot -> spawnItems(holder), holder.period);
@@ -148,7 +150,7 @@ public class ItemGenerator implements Generator<ItemEntry> {
         });
         itemStack.setAmount(1);
         
-        for (int i = 0; i < holder.itemEntry.getBuilder().getAmount() && currentItemCount < holder.itemEntry.getMaxItems(); i++) {
+        for (int i = 0; i < holder.itemEntry.getBuilder().getAmount() && currentItemCount < holder.maxItems; i++) {
             Item item = world.dropItem(location, itemStack);
             item.setVelocity(new Vector());
             SpawnedItem spawnedItem = this.addSpawnedItem(holder.itemEntry.getKey(), item);
@@ -179,6 +181,30 @@ public class ItemGenerator implements Generator<ItemEntry> {
     @Override
     public ItemEntry getEntry(Key id) {
         return this.entries.get(id);
+    }
+    
+    public int getMaxItems(Key entryKey) {
+        ItemEntryHolder holder = this.holders.get(entryKey);
+        if (holder != null) {
+            return holder.maxItems;
+        }
+        
+        return 0;
+    }
+    
+    public int getMaxItems(ItemEntry entry) {
+        return getMaxItems(entry.getKey());
+    }
+    
+    public void setMaxItems(Key entryKey, int maxItems) {
+        ItemEntryHolder holder = this.holders.get(entryKey);
+        if (holder != null) {
+            holder.maxItems = maxItems;
+        }
+    }
+    
+    public void setMaxItems(ItemEntry entry, int maxItems) {
+        setMaxItems(entry.getKey(), maxItems);
     }
     
     public void addPickupListener(Key entryKey, ItemPickupListener listener) {

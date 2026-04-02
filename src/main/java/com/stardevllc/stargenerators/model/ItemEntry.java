@@ -45,11 +45,6 @@ public class ItemEntry implements GeneratorEntry {
     protected final ItemBuilder<?, ?> builder;
     
     /**
-     * The max amount of items that can be within the generator bounds
-     */
-    protected int maxItems;
-    
-    /**
      * The boolean based flags for the entry
      */
     protected final Set<Flag> flags = EnumSet.noneOf(Flag.class);
@@ -59,10 +54,9 @@ public class ItemEntry implements GeneratorEntry {
         this.builder = builder;
     }
     
-    public ItemEntry(String key, ItemBuilder<?, ?> builder, int maxItems, Flag... flags) {
+    public ItemEntry(String key, ItemBuilder<?, ?> builder, Flag... flags) {
         this.key = new StringKey(key);
         this.builder = builder;
-        this.maxItems = maxItems;
         if (flags != null) {
             this.flags.addAll(List.of(flags));
         }
@@ -71,7 +65,6 @@ public class ItemEntry implements GeneratorEntry {
     public ItemEntry(String key, ItemBuilder<?, ?> builder, int maxItems, List<Flag> flags) {
         this.key = new StringKey(key);
         this.builder = builder;
-        this.maxItems = maxItems;
         if (flags != null) {
             this.flags.addAll(flags);
         }
@@ -92,14 +85,6 @@ public class ItemEntry implements GeneratorEntry {
             nbt.setString(NBT_KEY, getKey().toString());
         });
         return itemStack;
-    }
-    
-    public int getMaxItems() {
-        return maxItems;
-    }
-    
-    public void setMaxItems(int maxItems) {
-        this.maxItems = maxItems;
     }
     
     public Set<Flag> getFlags() {

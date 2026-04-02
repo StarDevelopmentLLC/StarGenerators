@@ -32,7 +32,6 @@ public final class StarGenerators {
     public static final IRegistry<ItemEntry> ITEMS = HashRegistry.builder(ItemEntry.class)
             .withId(Keys.of("stargenerators:items"))
             .asGlobal()
-            .addRegisterListener(e -> System.out.println("Registered the item entry " + e.key() + " to the Items Registery"))
             .build();
     
     private static ClockManager clockManager;
