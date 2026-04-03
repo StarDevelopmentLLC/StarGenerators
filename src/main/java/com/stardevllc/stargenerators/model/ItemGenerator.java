@@ -35,7 +35,7 @@ public class ItemGenerator implements Generator<ItemEntry> {
     
     protected final Map<Key, ItemEntry> entries = new HashMap<>();
     
-    private final Map<Key, ItemEntryHolder> holders = new HashMap<>();
+    protected final Map<Key, ItemEntryHolder> holders = new HashMap<>();
     
     /**
      * The min and max positions for the generator. This is Bukkit World independent, useful for minigames
@@ -60,17 +60,17 @@ public class ItemGenerator implements Generator<ItemEntry> {
         return name;
     }
     
-    private static final class ItemEntryHolder {
-        private final ItemEntry itemEntry;
-        private final CallbackPeriod period;
-        private Position position;
-        private long cooldown;
-        private int maxItems;
-        private int stackSize;
-        private UUID callbackId;
+    protected static final class ItemEntryHolder {
+        protected final ItemEntry itemEntry;
+        protected final CallbackPeriod period;
+        protected Position position;
+        protected long cooldown;
+        protected int maxItems;
+        protected int stackSize;
+        protected UUID callbackId;
         
-        private final List<ItemPickupListener> pickupListeners = new ArrayList<>();
-        private final List<ItemSpawnListener> spawnListeners = new ArrayList<>();
+        protected final List<ItemPickupListener> pickupListeners = new ArrayList<>();
+        protected final List<ItemSpawnListener> spawnListeners = new ArrayList<>();
         
         public ItemEntryHolder(ItemEntry e) {
             this.itemEntry = e;
