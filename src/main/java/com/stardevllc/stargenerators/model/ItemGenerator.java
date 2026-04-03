@@ -129,6 +129,21 @@ public class ItemGenerator implements Generator<ItemEntry> {
         this.stopwatch.pause();
     }
     
+    public void setEntryValues(Key entryKey, long cooldown, int maxItems, int stackSize) {
+        ItemEntryHolder holder = this.holders.get(entryKey);
+        if (holder != null) {
+            holder.cooldown = cooldown;
+            holder.maxItems = maxItems;
+            holder.stackSize = stackSize;
+        }
+    }
+    
+    public void setEntryValues(ItemEntry entry, long cooldown, int maxItems, int stackSize) {
+        if (entry != null) {
+            setEntryValues(entry.getKey(), cooldown, maxItems, stackSize);
+        }
+    }
+    
     public void addEntry(ItemEntry entry, Position position, long cooldown, int maxItems, int stackSize) {
         ItemEntryHolder holder = new ItemEntryHolder(entry);
         holder.position = position;
