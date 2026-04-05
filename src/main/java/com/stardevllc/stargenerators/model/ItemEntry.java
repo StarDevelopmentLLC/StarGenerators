@@ -1,6 +1,6 @@
 package com.stardevllc.stargenerators.model;
 
-import com.stardevllc.itembuilder.common.ItemBuilder;
+import com.stardevllc.minecraft.itembuilder.ItemBuilder;
 import com.stardevllc.starlib.objects.key.Key;
 import de.tr7zw.nbtapi.NBT;
 import org.bukkit.inventory.ItemStack;

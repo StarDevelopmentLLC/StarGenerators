@@ -1,7 +1,7 @@
 package com.stardevllc.stargenerators.model;
 
-import com.stardevllc.Cuboid;
-import com.stardevllc.Position;
+import com.stardevllc.minecraft.Cuboid;
+import com.stardevllc.minecraft.Position;
 import com.stardevllc.starlib.objects.Nameable;
 import com.stardevllc.starlib.objects.key.*;
 import org.bukkit.Location;

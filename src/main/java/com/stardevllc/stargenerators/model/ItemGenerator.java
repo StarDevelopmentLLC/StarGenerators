@@ -1,12 +1,12 @@
 package com.stardevllc.stargenerators.model;
 
-import com.stardevllc.Cuboid;
-import com.stardevllc.Position;
-import com.stardevllc.itembuilder.common.ItemBuilder;
+import com.stardevllc.minecraft.Cuboid;
+import com.stardevllc.minecraft.Position;
+import com.stardevllc.minecraft.itembuilder.ItemBuilder;
 import com.stardevllc.stargenerators.StarGenerators;
 import com.stardevllc.stargenerators.model.listener.ItemPickupListener;
 import com.stardevllc.stargenerators.model.listener.ItemSpawnListener;
-import com.stardevllc.staritems.ItemBuilders;
+import com.stardevllc.starcore.ItemBuilders;
 import com.stardevllc.starlib.clock.callback.CallbackPeriod;
 import com.stardevllc.starlib.clock.clocks.Stopwatch;
 import com.stardevllc.starlib.objects.key.Key;

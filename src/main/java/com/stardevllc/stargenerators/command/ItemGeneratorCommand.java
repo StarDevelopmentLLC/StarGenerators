@@ -1,6 +1,6 @@
 package com.stardevllc.stargenerators.command;
 
-import com.stardevllc.command.*;
+import com.stardevllc.minecraft.command.*;
 import com.stardevllc.stargenerators.StarGeneratorsPlugin;
 import com.stardevllc.starlib.objects.key.Key;
 import org.bukkit.Location;

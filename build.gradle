@@ -39,7 +39,6 @@ publishing {
 dependencies {
     compileOnly "org.spigotmc:spigot-api:${spigotVersion}"
     compileOnly "com.stardevllc:StarCore:${starcoreVersion}"
-    compileOnly "com.stardevllc:StarItems:${staritemsVersion}"
     compileOnly "de.tr7zw:item-nbt-api-plugin:${nbtapiVersion}"
 }
 

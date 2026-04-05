@@ -1,6 +1,6 @@
 package com.stardevllc.stargenerators;
 
-import com.stardevllc.plugin.ExtendedJavaPlugin;
+import com.stardevllc.minecraft.plugin.ExtendedJavaPlugin;
 import com.stardevllc.stargenerators.command.ItemGeneratorCommandOld;
 import com.stardevllc.stargenerators.listener.GeneratorListener;
 import org.bukkit.event.EventHandler;

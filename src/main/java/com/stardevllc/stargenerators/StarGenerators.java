@@ -19,20 +19,20 @@ public final class StarGenerators {
     
     @SuppressWarnings("rawtypes")
     public static final IRegistry<Generator> REGISTRY = HashRegistry.builder(Generator.class)
-            .withId(Keys.of("stargenerators:generators"))
+            .withKey(Keys.of("stargenerators:generators"))
             .asGlobal()
             .checkPartialInGet()
             .build();
     
     public static final IRegistry<ItemGenerator> ITEM_GENERATORS = HashRegistry.builder(ItemGenerator.class)
-            .withId(Keys.of("stargenerators:item_generators"))
+            .withKey(Keys.of("stargenerators:item_generators"))
             .withParent(REGISTRY)
             .checkPartialInGet()
             .asGlobal()
             .build();
     
     public static final IRegistry<ItemEntry> ITEMS = HashRegistry.builder(ItemEntry.class)
-            .withId(Keys.of("stargenerators:items"))
+            .withKey(Keys.of("stargenerators:items"))
             .asGlobal()
             .checkPartialInGet()
             .build();
