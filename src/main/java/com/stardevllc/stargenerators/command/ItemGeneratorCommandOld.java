@@ -262,7 +262,8 @@ public class ItemGeneratorCommandOld implements CommandExecutor, Listener {
                 lines.add("    &eSpawned Items: &b" + generator.getSpawnedItemsCount(entry.getKey()));
                 Position pos = generator.getSpawnPosition(entry);
                 lines.add("    &ePos: &b(" + pos.getBlockX() + ", " + pos.getBlockY() + ", " + pos.getBlockZ() + ")");
-                lines.add("    &eNext Spawn: &b" + timeFormat.format(generator.getNextSpawn(entry)));
+                long nextSpawn = generator.getNextSpawn(entry);
+                lines.add("    &eNext Spawn: &b" + timeFormat.format(nextSpawn > 0 ? nextSpawn : 0));
             }
             
             lines.forEach(line -> colors.coloredLegacy(sender, line));
