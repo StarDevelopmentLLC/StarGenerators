@@ -186,6 +186,11 @@ public class ItemGenerator implements Generator<ItemEntry> {
                 holder.pickupListeners.forEach(l -> l.onPickup(entity, spawnedItem));
                 
                 if (!spawnedItem.entry().hasFlag(ItemEntry.Flag.KEEP_DATA)) {
+                    NBT.modify(item.getItemStack(), nbt -> {
+                        nbt.removeKey(ItemEntry.NBT_KEY);
+                        nbt.removeKey(ItemGenerator.NBT_KEY);
+                    });
+                    
                     ItemBuilder<?, ?> itemBuilder = ItemBuilders.of(item.getItemStack());
                     itemBuilder.clearCustomNBT();
                     item.setItemStack(itemBuilder.build());
