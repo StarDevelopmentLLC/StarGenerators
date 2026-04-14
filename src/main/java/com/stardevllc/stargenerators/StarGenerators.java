@@ -18,20 +18,20 @@ public final class StarGenerators {
     private static JavaPlugin plugin;
     
     @SuppressWarnings("rawtypes")
-    public static final IRegistry<Generator> REGISTRY = HashRegistry.builder(Generator.class)
+    public static final IRegistry<Generator> REGISTRY = HashRegistry.newBuilder(Generator.class)
             .withKey(Keys.of("stargenerators:generators"))
             .asGlobal()
             .checkPartialInGet()
             .build();
     
-    public static final IRegistry<ItemGenerator> ITEM_GENERATORS = HashRegistry.builder(ItemGenerator.class)
+    public static final IRegistry<ItemGenerator> ITEM_GENERATORS = HashRegistry.newBuilder(ItemGenerator.class)
             .withKey(Keys.of("stargenerators:item_generators"))
             .withParent(REGISTRY)
             .checkPartialInGet()
             .asGlobal()
             .build();
     
-    public static final IRegistry<ItemEntry> ITEMS = HashRegistry.builder(ItemEntry.class)
+    public static final IRegistry<ItemEntry> ITEMS = HashRegistry.newBuilder(ItemEntry.class)
             .withKey(Keys.of("stargenerators:items"))
             .asGlobal()
             .checkPartialInGet()
