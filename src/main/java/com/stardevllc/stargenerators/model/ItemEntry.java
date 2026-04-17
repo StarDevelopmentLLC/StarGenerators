@@ -74,12 +74,18 @@ public class ItemEntry implements GeneratorEntry {
         return builder;
     }
     
-    public ItemStack createItemStack() {
+    public ItemStack createItemStack(boolean saveData) {
         ItemStack itemStack = builder.build();
-        NBT.modify(itemStack, nbt -> {
-            nbt.setString(NBT_KEY, getKey().toString());
-        });
+        if (saveData) {
+            NBT.modify(itemStack, nbt -> {
+                nbt.setString(NBT_KEY, getKey().toString());
+            });
+        }
         return itemStack;
+    }
+    
+    public ItemStack createItemStack() {
+        return createItemStack(true);
     }
     
     public Set<Flag> getFlags() {
