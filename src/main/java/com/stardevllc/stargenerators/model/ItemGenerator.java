@@ -40,7 +40,7 @@ public class ItemGenerator implements Generator<ItemEntry> {
     /**
      * The min and max positions for the generator. This is Bukkit World independent, useful for minigames
      */
-    protected Position boundsMin, boundsMax;
+    protected final Position boundsMin, boundsMax;
     
     /**
      * Since stopwatches are infinite clocks using longs to track time, we can use it to control timings of the item generation
@@ -161,9 +161,11 @@ public class ItemGenerator implements Generator<ItemEntry> {
         Location location = holder.position.toBlockLocation(world).add(0.5, 0, 0.5);
         
         ItemStack itemStack = holder.itemEntry.createItemStack();
-        NBT.modify(itemStack, nbt -> {
-            nbt.setString(NBT_KEY, getKey().toString());
-        });
+        if (getKey() != null && !getKey().isEmpty()) {
+            NBT.modify(itemStack, nbt -> {
+                nbt.setString(NBT_KEY, getKey().toString());
+            });
+        }
         itemStack.setAmount(1);
         
         for (int i = 0; i < holder.stackSize && currentItemCount < holder.maxItems; i++) {
