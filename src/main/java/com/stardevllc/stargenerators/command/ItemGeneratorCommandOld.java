@@ -187,6 +187,19 @@ public class ItemGeneratorCommandOld implements CommandExecutor, Listener {
             }
             
             return true;
+        } else if (args[0].equalsIgnoreCase("list")) {
+            if (ITEM_GENERATORS.isEmpty()) {
+                colors.coloredLegacy(sender, "&cThere are no generators to list.");
+                return true;
+            }
+            
+            colors.coloredLegacy(sender, "&eList of all Item Generators");
+            
+            for (Map.Entry<Key, ItemGenerator> entry : ITEM_GENERATORS.entrySet()) {
+                colors.coloredLegacy(sender, " &8- &b" + entry.getKey());
+            }
+            
+            return true;
         } else if (args[0].equalsIgnoreCase("select")) {
             if (!(args.length > 1)) {
                 colors.coloredLegacy(sender, "&cYou must provide an id for the generator to select");
