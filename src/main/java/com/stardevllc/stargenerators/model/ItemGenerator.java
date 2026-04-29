@@ -76,6 +76,27 @@ public class ItemGenerator implements Generator<ItemEntry> {
             this.itemEntry = e;
             this.period = () -> cooldown;
         }
+        
+        @Override
+        public boolean equals(Object object) {
+            if (!(object instanceof ItemEntryHolder holder)) {
+                return false;
+            }
+            
+            return cooldown == holder.cooldown && maxItems == holder.maxItems && stackSize == holder.stackSize && Objects.equals(itemEntry, holder.itemEntry) && Objects.equals(period, holder.period) && Objects.equals(position, holder.position) && Objects.equals(callbackId, holder.callbackId);
+        }
+        
+        @Override
+        public int hashCode() {
+            int result = Objects.hashCode(itemEntry);
+            result = 31 * result + Objects.hashCode(period);
+            result = 31 * result + Objects.hashCode(position);
+            result = 31 * result + Long.hashCode(cooldown);
+            result = 31 * result + maxItems;
+            result = 31 * result + stackSize;
+            result = 31 * result + Objects.hashCode(callbackId);
+            return result;
+        }
     }
     
     public ItemGenerator(String name, Position boundsMin, Position boundsMax) {
@@ -417,5 +438,27 @@ public class ItemGenerator implements Generator<ItemEntry> {
     
     public boolean hasEntry(Key entryId) {
         return this.entries.containsKey(entryId);
+    }
+    
+    @Override
+    public final boolean equals(Object object) {
+        if (!(object instanceof ItemGenerator that)) {
+            return false;
+        }
+        
+        return Objects.equals(key, that.key) && Objects.equals(name, that.name) && entries.equals(that.entries) && holders.equals(that.holders) && Objects.equals(boundsMin, that.boundsMin) && Objects.equals(boundsMax, that.boundsMax) && Objects.equals(world, that.world) && Objects.equals(region, that.region);
+    }
+    
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(key);
+        result = 31 * result + Objects.hashCode(name);
+        result = 31 * result + entries.hashCode();
+        result = 31 * result + holders.hashCode();
+        result = 31 * result + Objects.hashCode(boundsMin);
+        result = 31 * result + Objects.hashCode(boundsMax);
+        result = 31 * result + Objects.hashCode(world);
+        result = 31 * result + Objects.hashCode(region);
+        return result;
     }
 }

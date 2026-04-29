@@ -4,6 +4,7 @@ import com.stardevllc.minecraft.command.*;
 import com.stardevllc.stargenerators.StarGeneratorsPlugin;
 import com.stardevllc.starlib.objects.key.Key;
 import org.bukkit.Location;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.util.*;
@@ -29,7 +30,8 @@ public class ItemGeneratorCommand extends StarCommand<StarGeneratorsPlugin> {
     private class PositionSubCommand extends SubCommand<StarGeneratorsPlugin> {
         public PositionSubCommand(StarGeneratorsPlugin plugin, ICommand<StarGeneratorsPlugin> parent, int posN) {
             super(plugin, parent, 0, "pos" + posN, "Sets position " + posN, "stargenerators.itemgenerator.position");
-            this.executor = (p, sender, label, args, flagResults) -> {
+            this.executor = context -> {
+                CommandSender sender = context.sender();
                 Player player = (Player) sender;
                 positionSelection.computeIfAbsent(player.getUniqueId(), u -> new Selection());
                 Selection selection = positionSelection.get(player.getUniqueId());
